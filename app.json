@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Trimmr",
-    "slug": "Trimmr",
+    "slug": "easyRider",
     "version": "1.0.0",
     "scheme": "Trimmr",
     "platforms": [
@@ -51,7 +51,10 @@
       "router": {},
       "eas": {
         "projectId": "269af2d9-5911-41ea-8bc9-01389679de33"
-      }
-    }
+      },
+      "APPWRITE_ENDPOINT": "https://fra.cloud.appwrite.io/v1",
+      "APPWRITE_PROJECT_ID": "68f8b9eb001d8c76451f"
+    },
+    "owner": "andama"
   }
 }
