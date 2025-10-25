@@ -45,7 +45,7 @@ export default function Bookings() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       <Stack.Screen options={{ headerShown: false }} />
       
       {/* Header */}

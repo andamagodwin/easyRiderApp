@@ -25,7 +25,7 @@ export default function Favourites() {
   ];
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       <Stack.Screen options={{ headerShown: false }} />
       
       {/* Header */}

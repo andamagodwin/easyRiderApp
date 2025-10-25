@@ -12,7 +12,7 @@ import { AppwriteService, type ServiceDocument, type SalonDocument } from '../..
 
 export default function Home() {
   return (
-    <SafeAreaView className={styles.container}>
+    <SafeAreaView className={styles.container} edges={['top']}>
       <Stack.Screen options={{ title: 'Home' }} />
       <Header />
       <MainContent />
