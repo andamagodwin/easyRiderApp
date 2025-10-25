@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "easyRider",
-    "slug": "easyRider",
+    "name": "Trimmr",
+    "slug": "Trimmr",
     "version": "1.0.0",
-    "scheme": "easyRider",
+    "scheme": "Trimmr",
     "platforms": [
       "ios",
       "android"
@@ -45,7 +45,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.andama.easyRider"
+      "package": "com.andama.trimmr"
     },
     "extra": {
       "router": {},
