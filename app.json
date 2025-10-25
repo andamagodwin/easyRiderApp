@@ -46,6 +46,12 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.andama.easyRider"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "269af2d9-5911-41ea-8bc9-01389679de33"
+      }
     }
   }
 }
