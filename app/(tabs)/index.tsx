@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import Header from '../../components/Header';
@@ -9,6 +9,7 @@ import NearbySalons from '../../components/NearbySalons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, ScrollView, ActivityIndicator, Text } from 'react-native';
 import { AppwriteService, type ServiceDocument, type SalonDocument } from '../../lib/appwrite-service';
+import { type Salon } from '../../components/SalonCard';
 
 export default function Home() {
   return (
@@ -27,10 +28,15 @@ const styles = {
 };
 
 function MainContent() {
+  const router = useRouter();
   const [services, setServices] = useState<Service[]>([]);
-  const [salons, setSalons] = useState<any[]>([]);
+  const [salons, setSalons] = useState<Salon[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const handleSalonPress = (salon: Salon) => {
+    router.push(`./salon/${salon.id}`);
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -143,7 +149,7 @@ function MainContent() {
       </Section>
 
       <Section className="mt-6">
-        <NearbySalons salons={salons} />
+        <NearbySalons salons={salons} onSalonPress={handleSalonPress} />
       </Section>
 
       <View className="h-6" />

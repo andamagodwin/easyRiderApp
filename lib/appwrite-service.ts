@@ -7,6 +7,7 @@ const databases = new Databases(client);
 const DATABASE_ID = 'trimmr-db'; // Your database ID
 const SERVICES_COLLECTION = 'services';
 const SALONS_COLLECTION = 'salons';
+const SALON_SERVICES_COLLECTION = 'salon_services';
 
 export type ServiceDocument = {
   $id: string;
@@ -30,6 +31,19 @@ export type SalonDocument = {
   phone?: string;
   description?: string;
   services: string[]; // Array of service IDs
+  workingHours?: string;
+  images?: string[]; // Additional images
+  isActive: boolean;
+};
+
+export type SalonServiceDocument = {
+  $id: string;
+  salonId: string;
+  name: string;
+  price: number;
+  duration: number; // in minutes
+  category: string;
+  description?: string;
   isActive: boolean;
 };
 
@@ -102,6 +116,39 @@ export class AppwriteService {
     } catch (error) {
       console.error('Failed to fetch nearby salons:', error);
       return [];
+    }
+  }
+
+  // Salon Services
+  static async getSalonServices(salonId: string): Promise<SalonServiceDocument[]> {
+    try {
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        SALON_SERVICES_COLLECTION,
+        [
+          Query.equal('salonId', salonId),
+          Query.equal('isActive', true),
+          Query.orderAsc('category')
+        ]
+      );
+      return response.documents as unknown as SalonServiceDocument[];
+    } catch (error) {
+      console.error('Failed to fetch salon services:', error);
+      return [];
+    }
+  }
+
+  static async getSalonById(salonId: string): Promise<SalonDocument | null> {
+    try {
+      const response = await databases.getDocument(
+        DATABASE_ID,
+        SALONS_COLLECTION,
+        salonId
+      );
+      return response as unknown as SalonDocument;
+    } catch (error) {
+      console.error('Failed to fetch salon details:', error);
+      return null;
     }
   }
 
