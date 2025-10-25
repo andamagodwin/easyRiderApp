@@ -1,0 +1,59 @@
+import React from 'react';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+
+export type Salon = {
+  id: string;
+  name: string;
+  location: string;
+  distance: string;
+  rating: number;
+  reviewCount: number;
+  imageUrl?: string;
+};
+
+export type SalonCardProps = {
+  salon: Salon;
+  onPress?: (salon: Salon) => void;
+};
+
+export default function SalonCard({ salon, onPress }: SalonCardProps) {
+  return (
+    <TouchableOpacity
+      onPress={() => onPress?.(salon)}
+      activeOpacity={0.7}
+      className="bg-white rounded-2xl p-4 mb-3 flex-row shadow-sm border border-gray2/30"
+    >
+      {/* Salon Image */}
+      <View className="w-16 h-16 rounded-2xl bg-lighter mr-3 overflow-hidden">
+        {salon.imageUrl ? (
+          <Image source={{ uri: salon.imageUrl }} className="w-full h-full" />
+        ) : (
+          <View className="w-full h-full bg-lighter items-center justify-center">
+            <Ionicons name="storefront-outline" size={24} color="#A0A0A0" />
+          </View>
+        )}
+      </View>
+
+      {/* Salon Info */}
+      <View className="flex-1">
+        <View className="flex-row justify-between items-start mb-1">
+          <Text className="text-dark1 text-lg font-semibold flex-1 mr-2">{salon.name}</Text>
+          <Text className="text-gray1 text-sm">{salon.distance}</Text>
+        </View>
+
+        <View className="flex-row items-center mb-2">
+          <Ionicons name="location-outline" size={14} color="#A0A0A0" />
+          <Text className="text-gray1 ml-1 text-sm">{salon.location}</Text>
+        </View>
+
+        <View className="flex-row items-center">
+          <Ionicons name="star" size={16} color="#FFCC00" />
+          <Text className="text-dark1 ml-1 font-medium">
+            {salon.rating} ({salon.reviewCount})
+          </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+}

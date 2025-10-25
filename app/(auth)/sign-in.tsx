@@ -1,6 +1,6 @@
 import { Link, Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ImageBackground } from 'react-native';
 import useAuthStore from '../../store/auth';
 
 export default function SignIn() {
@@ -24,14 +24,19 @@ export default function SignIn() {
   };
 
   return (
-    <KeyboardAvoidingView className="flex-1 bg-lighter" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Stack.Screen options={{ headerShown: false }} />
-      <View className="flex-1 px-6 justify-center">
-        <Text className="text-3xl font-bold text-dark1 mb-8">Welcome back</Text>
+    <ImageBackground 
+      source={require('../../assets/auth-background.png')} 
+      className="flex-1"
+      resizeMode="cover"
+    >
+      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View className="flex-1 px-6 justify-center">
+          <Text className="text-3xl font-bold text-white mb-8">Welcome back</Text>
 
-        {error ? (
-          <Text className="text-error mb-4">{error}</Text>
-        ) : null}
+          {error ? (
+            <Text className="text-error mb-4">{error}</Text>
+          ) : null}
 
         <View className="gap-4">
           <View>
@@ -62,11 +67,12 @@ export default function SignIn() {
           </TouchableOpacity>
 
           <View className="flex-row gap-1 mt-4">
-            <Text className="text-dark2">Don’t have an account?</Text>
+            <Text className="text-white">Don&apos;t have an account?</Text>
             <Link href="./sign-up" className="text-info">Sign up</Link>
           </View>
         </View>
       </View>
     </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }
