@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import useFavouritesStore from '../store/favourites';
+import useAuthStore from '../store/auth';
 
 export type Salon = {
   id: string;
@@ -18,6 +20,16 @@ export type SalonCardProps = {
 };
 
 export default function SalonCard({ salon, onPress }: SalonCardProps) {
+  const { favouriteSalonIds, toggleFavourite } = useFavouritesStore();
+  const { user } = useAuthStore();
+  const isFavourite = favouriteSalonIds.has(salon.id);
+
+  const handleHeartPress = () => {
+    if (user) {
+      toggleFavourite(user.$id, salon.id, salon);
+    }
+  };
+
   return (
     <TouchableOpacity
       onPress={() => onPress?.(salon)}
@@ -39,7 +51,16 @@ export default function SalonCard({ salon, onPress }: SalonCardProps) {
       <View className="flex-1">
         <View className="flex-row justify-between items-start mb-1">
           <Text className="text-dark1 text-lg font-semibold flex-1 mr-2">{salon.name}</Text>
-          <Text className="text-gray1 text-sm">{salon.distance}</Text>
+          <View className="flex-row items-center">
+            <Text className="text-gray1 text-sm mr-2">{salon.distance}</Text>
+            <TouchableOpacity onPress={handleHeartPress} activeOpacity={0.7}>
+              <Ionicons 
+                name={isFavourite ? "heart" : "heart-outline"} 
+                size={20} 
+                color={isFavourite ? "#FF4444" : "#A0A0A0"} 
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View className="flex-row items-center mb-2">

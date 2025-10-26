@@ -1,4 +1,4 @@
-import { Account, Client } from 'react-native-appwrite';
+import { Account, Client, Databases } from 'react-native-appwrite';
 import Constants from 'expo-constants';
 
 const extra = Constants?.expoConfig?.extra as any;
@@ -19,6 +19,7 @@ if (projectId) client.setProject(projectId);
 if (platform) client.setPlatform(platform);
 
 export const account = new Account(client);
+export const databases = new Databases(client);
 
 export function assertConfigured() {
   if (!endpoint || !projectId) {

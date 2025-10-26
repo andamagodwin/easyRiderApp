@@ -1,5 +1,5 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
   View, 
   Text, 
@@ -11,6 +11,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { AppwriteService, type SalonDocument, type SalonServiceDocument } from '../../lib/appwrite-service';
+import useFavouritesStore from '../../store/favourites';
+import useAuthStore from '../../store/auth';
 
 const { width } = Dimensions.get('window');
 
@@ -21,13 +23,16 @@ type SalonDetailsType = SalonDocument & {
 export default function SalonDetails() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { user } = useAuthStore();
+  const { favouriteSalonIds, toggleFavourite } = useFavouritesStore();
   const [salon, setSalon] = useState<SalonDetailsType | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('Hair Cut');
-  const [isFavorite, setIsFavorite] = useState(false);
+  
+  const isFavourite = id ? favouriteSalonIds.has(id) : false;
 
   // Mock data for development
-  const mockSalon: SalonDetailsType = {
+  const mockSalon: SalonDetailsType = useMemo(() => ({
     $id: id || '1',
     name: 'Hair Avenue',
     address: 'No 03, Kadalana Road',
@@ -56,7 +61,7 @@ export default function SalonDetails() {
       { $id: '5', salonId: id || '1', name: 'Deep Treatment', price: 35.00, duration: 90, category: 'Hair Treatments', isActive: true },
       { $id: '6', salonId: id || '1', name: 'Hair + Styling Combo', price: 40.00, duration: 75, category: 'Combo', isActive: true },
     ]
-  };
+  }), [id]);
 
   useEffect(() => {
     const loadSalonDetails = async () => {
@@ -94,7 +99,7 @@ export default function SalonDetails() {
     };
 
     loadSalonDetails();
-  }, [id]);
+  }, [id, mockSalon]);
 
   const categories = salon ? [...new Set(salon.salonServices.map(s => s.category))] : [];
   const filteredServices = salon ? salon.salonServices.filter(s => s.category === selectedCategory) : [];
@@ -138,13 +143,24 @@ export default function SalonDetails() {
             </TouchableOpacity>
             
             <TouchableOpacity 
-              onPress={() => setIsFavorite(!isFavorite)}
+              onPress={() => {
+                if (user && id && salon) {
+                  toggleFavourite(user.$id, id, {
+                    name: salon.name,
+                    location: `${salon.address}, ${salon.city}`,
+                    rating: salon.rating,
+                    reviewCount: salon.reviewCount,
+                    imageUrl: salon.imageUrl,
+                    services: categories
+                  });
+                }
+              }}
               className="w-10 h-10 rounded-full bg-white/90 items-center justify-center"
             >
               <Ionicons 
-                name={isFavorite ? "heart" : "heart-outline"} 
+                name={isFavourite ? "heart" : "heart-outline"} 
                 size={24} 
-                color={isFavorite ? "#FF3B30" : "#0B0C15"} 
+                color={isFavourite ? "#FF3B30" : "#0B0C15"} 
               />
             </TouchableOpacity>
           </View>

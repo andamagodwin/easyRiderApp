@@ -1,102 +1,113 @@
-import { Stack } from 'expo-router';
+import React, { useEffect } from 'react';
+import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import useFavouritesStore from '../../store/favourites';
+import useAuthStore from '../../store/auth';
+import SalonCard from '../../components/SalonCard';
+import { Container } from '../../components/Container';
 
 export default function Favourites() {
-  const mockFavourites = [
-    {
-      id: '1',
-      name: 'Hair Avenue',
-      location: 'Lakewood, California',
-      rating: 4.7,
-      reviewCount: 312,
-      imageUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=100&h=100&fit=crop&crop=faces',
-      services: ['Hair Cut', 'Hair Styling']
-    },
-    {
-      id: '2',
-      name: 'Nail Paradise',
-      location: 'Long Beach, California',
-      rating: 4.8,
-      reviewCount: 158,
-      services: ['Nail Art', 'Manicure']
+  const router = useRouter();
+  const { user } = useAuthStore();
+  const { favourites, loading, error, loadFavourites, clearError } = useFavouritesStore();
+
+  useEffect(() => {
+    if (user) {
+      loadFavourites(user.$id);
     }
-  ];
+  }, [user, loadFavourites]);
+
+  const handleRefresh = () => {
+    if (user) {
+      loadFavourites(user.$id);
+    }
+  };
+
+  const handleSalonPress = (salon: any) => {
+    router.push(`/salon/${salon.id}`);
+  };
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
-      <Stack.Screen options={{ headerShown: false }} />
-      
-      {/* Header */}
-      <View className="px-4 py-4 border-b border-lighter">
-        <Text className="text-2xl font-bold text-dark1">Favourites</Text>
-        <Text className="text-gray1 mt-1">Your saved salons</Text>
-      </View>
+    <SafeAreaView edges={['top']} className="flex-1 bg-bgPrimary">
+      <Stack.Screen
+        options={{
+          headerShown: false,
+        }}
+      />
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="px-4 py-4">
-          {mockFavourites.length > 0 ? (
-            mockFavourites.map((salon) => (
-              <TouchableOpacity
-                key={salon.id}
-                className="bg-white border border-gray2/30 rounded-2xl p-4 mb-4 shadow-sm"
-                activeOpacity={0.7}
-              >
-                <View className="flex-row items-start">
-                  {/* Salon Image */}
-                  <View className="w-16 h-16 rounded-2xl bg-lighter mr-3 overflow-hidden">
-                    {salon.imageUrl ? (
-                      <Image source={{ uri: salon.imageUrl }} className="w-full h-full" />
-                    ) : (
-                      <View className="w-full h-full bg-lighter items-center justify-center">
-                        <Ionicons name="storefront-outline" size={24} color="#A0A0A0" />
-                      </View>
-                    )}
-                  </View>
+      <Container>
+        {/* Header */}
+        <View className="flex-row items-center justify-between mb-6">
+          <View>
+            <Text className="text-2xl font-bold text-dark1 mb-1">My Favourites</Text>
+            <Text className="text-gray1">Your saved salons</Text>
+          </View>
+          <TouchableOpacity className="w-10 h-10 bg-white rounded-xl items-center justify-center">
+            <Ionicons name="heart" size={20} color="#FF4444" />
+          </TouchableOpacity>
+        </View>
 
-                  {/* Salon Info */}
-                  <View className="flex-1">
-                    <View className="flex-row justify-between items-start mb-1">
-                      <Text className="text-lg font-semibold text-dark1 flex-1 mr-2">{salon.name}</Text>
-                      <TouchableOpacity className="p-1">
-                        <Ionicons name="heart" size={20} color="#FF3B30" />
-                      </TouchableOpacity>
-                    </View>
-
-                    <View className="flex-row items-center mb-2">
-                      <Ionicons name="location-outline" size={14} color="#A0A0A0" />
-                      <Text className="text-gray1 ml-1 text-sm">{salon.location}</Text>
-                    </View>
-
-                    <View className="flex-row items-center justify-between">
-                      <View className="flex-row items-center">
-                        <Ionicons name="star" size={16} color="#FFCC00" />
-                        <Text className="text-dark1 ml-1 font-medium">
-                          {salon.rating} ({salon.reviewCount})
-                        </Text>
-                      </View>
-                      <View className="flex-row flex-wrap">
-                        {salon.services.slice(0, 2).map((service, index) => (
-                          <View key={index} className="bg-lighter px-2 py-1 rounded-lg ml-1">
-                            <Text className="text-primary text-xs">{service}</Text>
-                          </View>
-                        ))}
-                      </View>
-                    </View>
-                  </View>
-                </View>
+        {/* Error Message */}
+        {error && (
+          <View className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+            <View className="flex-row items-center justify-between">
+              <Text className="text-red-600 flex-1">{error}</Text>
+              <TouchableOpacity onPress={clearError}>
+                <Ionicons name="close" size={20} color="#DC2626" />
               </TouchableOpacity>
-            ))
-          ) : (
+            </View>
+          </View>
+        )}
+
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
+          }
+        >
+          {favourites.length === 0 ? (
             <View className="items-center justify-center py-20">
-              <Ionicons name="heart-outline" size={64} color="#A0A0A0" />
-              <Text className="text-gray1 text-lg mt-4">No favourites yet</Text>
-              <Text className="text-gray2 text-center mt-2">Tap the heart icon on salons to save them here</Text>
+              <View className="w-20 h-20 bg-lighter rounded-full items-center justify-center mb-4">
+                <Ionicons name="heart-outline" size={32} color="#A0A0A0" />
+              </View>
+              <Text className="text-xl font-semibold text-dark1 mb-2">No favourites yet</Text>
+              <Text className="text-gray1 text-center mb-6">
+                Start exploring salons and add them to your favourites by tapping the heart icon
+              </Text>
+              <TouchableOpacity 
+                onPress={() => router.push('/')}
+                className="bg-primary px-6 py-3 rounded-xl"
+              >
+                <Text className="text-white font-semibold">Explore Salons</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View className="pb-6">
+              {favourites.map((favourite) => {
+                if (!favourite.salon) return null;
+                
+                return (
+                  <SalonCard
+                    key={favourite.salonId}
+                    salon={{
+                      id: favourite.salonId,
+                      name: favourite.salon.name,
+                      location: favourite.salon.location,
+                      distance: '0.5 km', // Could calculate based on location
+                      rating: favourite.salon.rating,
+                      reviewCount: favourite.salon.reviewCount,
+                      imageUrl: favourite.salon.imageUrl,
+                    }}
+                    onPress={handleSalonPress}
+                  />
+                );
+              })}
             </View>
           )}
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </Container>
     </SafeAreaView>
   );
 }
