@@ -9,6 +9,7 @@ const SERVICES_COLLECTION = 'services';
 const SALONS_COLLECTION = 'salons';
 const SALON_SERVICES_COLLECTION = 'salon_services';
 const STYLISTS_COLLECTION = 'stylists';
+const BOOKINGS_COLLECTION = 'bookings';
 
 export type ServiceDocument = {
   $id: string;
@@ -60,6 +61,29 @@ export type StylistDocument = {
   availableServices: string[]; // Array of service IDs this stylist can perform
   workingHours?: string; // JSON string of working schedule
   isActive: boolean;
+};
+
+export type BookingDocument = {
+  $id?: string;
+  userId: string;
+  salonId: string;
+  salonName: string;
+  salonAddress?: string;
+  stylistId?: string;
+  stylistName?: string;
+  serviceIds: string[];
+  serviceNames: string[];
+  servicePrices: number[];
+  appointmentDate: string;
+  appointmentTime: string;
+  totalPrice: number;
+  totalDuration: number;
+  discount?: number;
+  finalAmount: number;
+  paymentMethod: string;
+  paymentStatus: string;
+  bookingStatus: string;
+  notes?: string;
 };
 
 export class AppwriteService {
@@ -288,6 +312,44 @@ export class AppwriteService {
       return response.documents as unknown as StylistDocument[];
     } catch (error) {
       console.error('🔧 DEBUG: Failed to fetch all salon stylists:', error);
+      return [];
+    }
+  }
+
+  // Bookings
+  static async createBooking(bookingData: Omit<BookingDocument, '$id'>): Promise<BookingDocument> {
+    try {
+      console.log('📝 Creating booking with data:', bookingData);
+      
+      const response = await databases.createDocument(
+        DATABASE_ID,
+        BOOKINGS_COLLECTION,
+        'unique()', // Let Appwrite generate a unique ID
+        bookingData
+      );
+      
+      console.log('✅ Booking created successfully:', response.$id);
+      return response as unknown as BookingDocument;
+    } catch (error) {
+      console.error('❌ Failed to create booking:', error);
+      throw error;
+    }
+  }
+
+  static async getUserBookings(userId: string): Promise<BookingDocument[]> {
+    try {
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        BOOKINGS_COLLECTION,
+        [
+          Query.equal('userId', userId),
+          Query.orderDesc('$createdAt'),
+          Query.limit(50)
+        ]
+      );
+      return response.documents as unknown as BookingDocument[];
+    } catch (error) {
+      console.error('Failed to fetch user bookings:', error);
       return [];
     }
   }

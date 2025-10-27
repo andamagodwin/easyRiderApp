@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import useBookingStore from '../../store/booking';
+import useAuthStore from '../../store/auth';
 import { Container } from '../../components/Container';
+import { SuccessModal } from '../../components/SuccessModal';
+import { AppwriteService } from '../../lib/appwrite-service';
 
 export default function BookingSummary() {
   const router = useRouter();
+  const { user } = useAuthStore();
   const { 
     salon,
     selectedServices,
@@ -16,22 +20,78 @@ export default function BookingSummary() {
     selectedTime,
     totalPrice,
     totalDuration,
+    resetBooking,
   } = useBookingStore();
 
   const [paymentMethod, setPaymentMethod] = useState<'online' | 'salon'>('salon');
+  const [loading, setLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Calculate discount (if any)
   const discount = 3.00; // This would come from promotions/discounts
   const finalTotal = totalPrice - discount;
 
-  const handleProceed = () => {
-    console.log('💳 Processing booking...');
-    console.log('Payment method:', paymentMethod);
-    console.log('Total amount:', finalTotal);
-    
-    // TODO: Process payment and create booking in database
-    // For now, navigate back to home
-    router.push('/(tabs)');
+  const handleProceed = async () => {
+    if (!user) {
+      Alert.alert('Error', 'You must be logged in to make a booking');
+      return;
+    }
+
+    if (!salon || !selectedDate || !selectedTime || selectedServices.length === 0) {
+      Alert.alert('Error', 'Missing booking information');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Prepare booking data
+      const bookingData = {
+        userId: user.$id,
+        salonId: salon.$id,
+        salonName: salon.name,
+        salonAddress: `${salon.address}, ${salon.city}`,
+        stylistId: selectedStylist?.$id || '',
+        stylistName: selectedStylist?.name || 'Any stylist',
+        serviceIds: selectedServices.map(s => s.$id),
+        serviceNames: selectedServices.map(s => s.name),
+        servicePrices: selectedServices.map(s => s.price),
+        appointmentDate: selectedDate,
+        appointmentTime: selectedTime,
+        totalPrice: totalPrice,
+        totalDuration: totalDuration,
+        discount: discount,
+        finalAmount: finalTotal,
+        paymentMethod: paymentMethod === 'salon' ? 'pay_at_salon' : 'online',
+        paymentStatus: 'pending',
+        bookingStatus: 'confirmed',
+        notes: '',
+      };
+
+      console.log('💳 Creating booking:', bookingData);
+
+      // Create booking in Appwrite
+      const booking = await AppwriteService.createBooking(bookingData);
+
+      console.log('✅ Booking created successfully:', booking.$id);
+
+      setLoading(false);
+      setShowSuccessModal(true);
+
+    } catch (error) {
+      setLoading(false);
+      console.error('❌ Booking creation failed:', error);
+      Alert.alert(
+        'Booking Failed', 
+        'We couldn\'t process your booking. Please try again.'
+      );
+    }
+  };
+
+  const handleSuccessClose = () => {
+    setShowSuccessModal(false);
+    resetBooking(); // Clear booking data
+    router.push('/(tabs)'); // Navigate to home
   };
 
   if (!salon || !selectedDate || !selectedTime) {
@@ -183,12 +243,24 @@ export default function BookingSummary() {
         <View className="absolute bottom-0 left-0 right-0 bg-bgPrimary pb-6 px-6">
           <TouchableOpacity 
             onPress={handleProceed}
-            className="bg-primary py-4 rounded-2xl"
+            disabled={loading}
+            className={`bg-primary py-4 rounded-2xl ${loading ? 'opacity-50' : ''}`}
           >
-            <Text className="text-white text-center text-lg font-semibold">Proceed</Text>
+            <Text className="text-white text-center text-lg font-semibold">
+              {loading ? 'Processing...' : 'Proceed'}
+            </Text>
           </TouchableOpacity>
         </View>
       </Container>
+
+      {/* Success Modal */}
+      <SuccessModal
+        visible={showSuccessModal}
+        title="Booking Confirmed!"
+        message="Your appointment has been successfully booked. We look forward to seeing you!"
+        buttonText="Done"
+        onClose={handleSuccessClose}
+      />
     </SafeAreaView>
   );
 }
