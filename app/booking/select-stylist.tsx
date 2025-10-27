@@ -63,7 +63,7 @@ export default function SelectStylist() {
     setCurrentStep('datetime');
     // TODO: Navigate to date/time selection screen
     console.log('Continue to date/time selection');
-    // router.push('/booking/select-datetime');
+    router.push('/booking/select-datetime');
   };
 
   const isOptionSelected = (option: StylistOption) => {
