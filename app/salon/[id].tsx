@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AppwriteService, type SalonDocument, type SalonServiceDocument } from '../../lib/appwrite-service';
 import useFavouritesStore from '../../store/favourites';
 import useAuthStore from '../../store/auth';
+import useBookingStore from '../../store/booking';
 
 const { width } = Dimensions.get('window');
 
@@ -25,9 +26,11 @@ export default function SalonDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuthStore();
   const { favouriteSalonIds, toggleFavourite } = useFavouritesStore();
-  const [salon, setSalon] = useState<SalonDetailsType | null>(null);
+  const { setSalon, setSelectedServices, setCurrentStep } = useBookingStore();
+  const [salon, setSalonData] = useState<SalonDetailsType | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('Hair Cut');
+  const [localSelectedServices, setLocalSelectedServices] = useState<Set<string>>(new Set());
   
   const isFavourite = id ? favouriteSalonIds.has(id) : false;
 
@@ -76,7 +79,7 @@ export default function SalonDetails() {
         ]);
 
         if (salonData) {
-          setSalon({
+          setSalonData({
             ...salonData,
             salonServices: servicesData
           });
@@ -88,11 +91,11 @@ export default function SalonDetails() {
           }
         } else {
           // Fallback to mock data for development
-          setSalon(mockSalon);
+          setSalonData(mockSalon);
         }
       } catch (error) {
         console.error('Failed to load salon details:', error);
-        setSalon(mockSalon); // Fallback to mock data
+        setSalonData(mockSalon); // Fallback to mock data
       } finally {
         setLoading(false);
       }
@@ -104,9 +107,57 @@ export default function SalonDetails() {
   const categories = salon ? [...new Set(salon.salonServices.map(s => s.category))] : [];
   const filteredServices = salon ? salon.salonServices.filter(s => s.category === selectedCategory) : [];
 
-  const handleBookService = (service: SalonServiceDocument) => {
-    // TODO: Navigate to booking screen with salon and service details
-    console.log('Book service:', service.name, 'at', salon?.name);
+  const handleServiceToggle = (serviceId: string) => {
+    setLocalSelectedServices(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(serviceId)) {
+        newSet.delete(serviceId);
+      } else {
+        newSet.add(serviceId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleContinue = () => {
+    if (localSelectedServices.size > 0 && salon) {
+      // Prepare salon data for booking store
+      const bookingSalon = {
+        $id: salon.$id,
+        name: salon.name,
+        address: salon.address,
+        city: salon.city,
+        imageUrl: salon.imageUrl
+      };
+
+      // Prepare selected services data for booking store
+      const selectedServiceDetails = salon.salonServices
+        .filter(s => localSelectedServices.has(s.$id))
+        .map(s => ({
+          $id: s.$id,
+          name: s.name,
+          price: s.price,
+          duration: s.duration,
+          category: s.category
+        }));
+
+      console.log('🏢 Salon:', bookingSalon.name);
+      console.log('💇 Services:', selectedServiceDetails.map(s => s.name).join(', '));
+      console.log('💰 Total Price:', selectedServiceDetails.reduce((sum, s) => sum + s.price, 0));
+
+      // Update booking store
+      setSalon(bookingSalon);
+      setSelectedServices(selectedServiceDetails);
+      setCurrentStep('stylist');
+      console.log('📦 Booking store updated');
+
+      // Navigate to stylist selection
+      console.log('Navigate to stylist selection');
+      
+      // Use the exact path as shown in the type system
+      router.push('/booking/select-stylist' as any);
+      console.log('✅ Navigation triggered');
+    }
   };
 
   if (loading || !salon) {
@@ -228,18 +279,56 @@ export default function SalonDetails() {
                 </View>
                 
                 <TouchableOpacity
-                  onPress={() => handleBookService(service)}
-                  className="w-8 h-8 rounded-full border-2 border-primary items-center justify-center"
+                  onPress={() => handleServiceToggle(service.$id)}
+                  className={`w-8 h-8 rounded-full border-2 items-center justify-center ${
+                    localSelectedServices.has(service.$id) 
+                      ? 'bg-primary border-primary' 
+                      : 'border-primary'
+                  }`}
                 >
-                  <Ionicons name="add" size={18} color="#235AFF" />
+                  <Ionicons 
+                    name={localSelectedServices.has(service.$id) ? "checkmark" : "add"} 
+                    size={18} 
+                    color={localSelectedServices.has(service.$id) ? "#FFFFFF" : "#235AFF"} 
+                  />
                 </TouchableOpacity>
               </View>
             ))}
           </View>
 
-          <View className="h-6" />
+          <View className="h-20" />
         </View>
       </ScrollView>
+
+      {/* Fixed Continue Button at Bottom */}
+      <SafeAreaView edges={['bottom']} className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray2/30">
+        <View className="px-4 py-4">
+          <TouchableOpacity
+            onPress={handleContinue}
+            disabled={localSelectedServices.size === 0}
+            className={`flex-row items-center justify-center py-4 rounded-2xl ${
+              localSelectedServices.size > 0 
+                ? 'bg-primary' 
+                : 'bg-gray2/30'
+            }`}
+          >
+            <Text className={`text-lg font-semibold mr-2 ${
+              localSelectedServices.size > 0 
+                ? 'text-white' 
+                : 'text-gray1'
+            }`}>
+              Continue
+            </Text>
+            {localSelectedServices.size > 0 && (
+              <View className="bg-white/20 rounded-full px-2 py-1 min-w-[24px] items-center">
+                <Text className="text-white text-sm font-bold">
+                  {localSelectedServices.size}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     </SafeAreaView>
   );
 }

@@ -8,6 +8,7 @@ const DATABASE_ID = 'trimmr-db'; // Your database ID
 const SERVICES_COLLECTION = 'services';
 const SALONS_COLLECTION = 'salons';
 const SALON_SERVICES_COLLECTION = 'salon_services';
+const STYLISTS_COLLECTION = 'stylists';
 
 export type ServiceDocument = {
   $id: string;
@@ -44,6 +45,20 @@ export type SalonServiceDocument = {
   duration: number; // in minutes
   category: string;
   description?: string;
+  isActive: boolean;
+};
+
+export type StylistDocument = {
+  $id: string;
+  salonId: string;
+  name: string;
+  specialty: string;
+  imageUrl?: string;
+  rating: number;
+  reviewCount: number;
+  isTopRated: boolean;
+  availableServices: string[]; // Array of service IDs this stylist can perform
+  workingHours?: string; // JSON string of working schedule
   isActive: boolean;
 };
 
@@ -149,6 +164,131 @@ export class AppwriteService {
     } catch (error) {
       console.error('Failed to fetch salon details:', error);
       return null;
+    }
+  }
+
+  // Stylists
+  static async getSalonStylists(salonId: string, serviceIds?: string[]): Promise<StylistDocument[]> {
+    try {
+      console.log('🔍 Querying stylists for salon:', salonId);
+      console.log('🔍 With service IDs:', serviceIds);
+
+      let queries = [
+        Query.equal('salonId', salonId),
+        Query.equal('isActive', true),
+        Query.orderDesc('isTopRated'), // Top rated stylists first
+        Query.orderDesc('rating')
+      ];
+
+      // If specific services are selected, filter stylists who can perform them
+      if (serviceIds && serviceIds.length > 0) {
+        console.log('🔍 Adding service filter for:', serviceIds);
+        // Find stylists who have at least one of the required services
+        queries.push(Query.contains('availableServices', serviceIds));
+      }
+
+      console.log('🔍 Final queries:', queries);
+
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        STYLISTS_COLLECTION,
+        queries
+      );
+
+      console.log('🔍 Database response:', response);
+      console.log('🔍 Found stylists:', response.documents.length);
+      
+      // If no stylists found with service filter, try without service filter
+      if (response.documents.length === 0 && serviceIds && serviceIds.length > 0) {
+        console.log('🔍 No stylists found with service filter, trying without filter...');
+        
+        const fallbackQueries = [
+          Query.equal('salonId', salonId),
+          Query.equal('isActive', true),
+          Query.orderDesc('isTopRated'),
+          Query.orderDesc('rating')
+        ];
+
+        const fallbackResponse = await databases.listDocuments(
+          DATABASE_ID,
+          STYLISTS_COLLECTION,
+          fallbackQueries
+        );
+
+        console.log('🔍 Fallback query found stylists:', fallbackResponse.documents.length);
+        
+        if (fallbackResponse.documents.length > 0) {
+          console.log('🔍 First fallback stylist example:', {
+            name: fallbackResponse.documents[0].name,
+            salonId: fallbackResponse.documents[0].salonId,
+            availableServices: fallbackResponse.documents[0].availableServices
+          });
+        }
+
+        return fallbackResponse.documents as unknown as StylistDocument[];
+      }
+      
+      if (response.documents.length > 0) {
+        console.log('🔍 First stylist example:', {
+          name: response.documents[0].name,
+          salonId: response.documents[0].salonId,
+          availableServices: response.documents[0].availableServices
+        });
+      }
+
+      return response.documents as unknown as StylistDocument[];
+    } catch (error) {
+      console.error('❌ Failed to fetch salon stylists:', error);
+      return [];
+    }
+  }
+
+  static async getStylistById(stylistId: string): Promise<StylistDocument | null> {
+    try {
+      const response = await databases.getDocument(
+        DATABASE_ID,
+        STYLISTS_COLLECTION,
+        stylistId
+      );
+      return response as unknown as StylistDocument;
+    } catch (error) {
+      console.error('Failed to fetch stylist details:', error);
+      return null;
+    }
+  }
+
+  // Debug helper to test if stylists exist for a salon (without service filtering)
+  static async getAllSalonStylists(salonId: string): Promise<StylistDocument[]> {
+    try {
+      console.log('🔧 DEBUG: Getting ALL stylists for salon:', salonId);
+      
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        STYLISTS_COLLECTION,
+        [
+          Query.equal('salonId', salonId),
+          Query.orderDesc('isTopRated'),
+          Query.orderDesc('rating')
+        ]
+      );
+
+      console.log('🔧 DEBUG: Total stylists (including inactive):', response.documents.length);
+      
+      if (response.documents.length > 0) {
+        response.documents.forEach((doc, index) => {
+          console.log(`🔧 DEBUG: Stylist ${index + 1}:`, {
+            name: doc.name,
+            salonId: doc.salonId,
+            isActive: doc.isActive,
+            availableServices: doc.availableServices
+          });
+        });
+      }
+
+      return response.documents as unknown as StylistDocument[];
+    } catch (error) {
+      console.error('🔧 DEBUG: Failed to fetch all salon stylists:', error);
+      return [];
     }
   }
 
