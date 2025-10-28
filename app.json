@@ -20,6 +20,12 @@
         {
           "RNMapboxMapsDownloadToken": "sk.eyJ1IjoiYW5kYW1hZXpyYSIsImEiOiJjbWgxeGxqaTUwd3F4cmtzYjE5eHJtYWdhIn0.dM1wMhWJ4RfGN5jSxXfEBA"
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Show current location on map and provide nearby salon recommendations."
+        }
       ]
     ],
     "experiments": {

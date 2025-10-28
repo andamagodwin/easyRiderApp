@@ -1,9 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, TouchableOpacity, TextInput, ScrollView, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Mapbox from '@rnmapbox/maps';
+import useLocationStore from '../store/location';
 
 // Set your Mapbox access token
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || 'pk.eyJ1IjoiYW5kYW1hZXpyYSIsImEiOiJjbWM3djMyamcwMmxuMmxzYTFsMThpNTJwIn0.9H7kNoaCYW0Kiw0wzrLfhQ');
@@ -22,9 +23,22 @@ type MapSalon = {
 
 export default function MapView() {
   const router = useRouter();
+  const { location } = useLocationStore();
   const mapRef = useRef<Mapbox.MapView>(null);
   const [selectedSalon, setSelectedSalon] = useState<MapSalon | null>(null);
   const [searchLocation, setSearchLocation] = useState('Lakewood, California');
+
+  // Use user's location or fall back to default Lakewood location
+  const mapCenter = location 
+    ? [location.longitude, location.latitude]
+    : [-118.1339, 33.8536];
+
+  // Update search location when user location is available
+  useEffect(() => {
+    if (location?.displayName) {
+      setSearchLocation(location.displayName);
+    }
+  }, [location]);
 
   // Mock salon data with coordinates (replace with real data from Appwrite)
   const salons: MapSalon[] = [
@@ -167,9 +181,16 @@ export default function MapView() {
         >
           <Mapbox.Camera
             zoomLevel={11}
-            centerCoordinate={[-118.1339, 33.8536]} // Lakewood, California
+            centerCoordinate={mapCenter}
             animationMode="flyTo"
             animationDuration={2000}
+          />
+
+          {/* User Location Puck */}
+          <Mapbox.LocationPuck
+            pulsing={{ isEnabled: true }}
+            puckBearingEnabled
+            puckBearing="heading"
           />
 
           {/* Salon Markers */}

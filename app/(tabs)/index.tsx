@@ -10,9 +10,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, ScrollView, ActivityIndicator, Text } from 'react-native';
 import { AppwriteService, type ServiceDocument, type SalonDocument } from '../../lib/appwrite-service';
 import { type Salon } from '../../components/SalonCard';
+import useLocationStore from '../../store/location';
 
 export default function Home() {
   const router = useRouter();
+  const { location } = useLocationStore();
 
   const handleBellPress = () => {
     router.push('/notifications');
@@ -26,6 +28,7 @@ export default function Home() {
     <SafeAreaView className={styles.container} edges={['top']}>
       <Stack.Screen options={{ title: 'Home' }} />
       <Header 
+        location={location?.displayName || 'Getting location...'}
         onBellPress={handleBellPress}
         onLocationPress={handleLocationPress}
       />

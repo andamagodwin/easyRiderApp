@@ -3,6 +3,7 @@ import '../global.css';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
 import useAuthStore from '../store/auth';
+import useLocationStore from '../store/location';
 import LoadingScreen from '../components/LoadingScreen';
 
 export default function Layout() {
@@ -14,6 +15,7 @@ export default function Layout() {
     initialized: s.initialized,
     loadSession: s.loadSession,
   }));
+  const { getCurrentLocation } = useLocationStore();
 
   useEffect(() => {
     async function prepare() {
@@ -21,8 +23,11 @@ export default function Layout() {
         // Load auth session
         await loadSession();
         
+        // Get user's current location
+        await getCurrentLocation();
+        
         // Simulate loading assets (you can add actual asset loading here)
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 1500));
         
         // Mark as ready
         setIsReady(true);
@@ -33,7 +38,7 @@ export default function Layout() {
     }
 
     prepare();
-  }, [loadSession]);
+  }, [loadSession, getCurrentLocation]);
 
   useEffect(() => {
     if (!initialized || !isReady) return;
