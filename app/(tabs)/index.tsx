@@ -18,10 +18,17 @@ export default function Home() {
     router.push('/notifications');
   };
 
+  const handleLocationPress = () => {
+    router.push('/map-view');
+  };
+
   return (
     <SafeAreaView className={styles.container} edges={['top']}>
       <Stack.Screen options={{ title: 'Home' }} />
-      <Header onBellPress={handleBellPress} />
+      <Header 
+        onBellPress={handleBellPress}
+        onLocationPress={handleLocationPress}
+      />
       <MainContent />
     </SafeAreaView>
   );
