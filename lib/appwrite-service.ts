@@ -10,6 +10,7 @@ const SALONS_COLLECTION = 'salons';
 const SALON_SERVICES_COLLECTION = 'salon_services';
 const STYLISTS_COLLECTION = 'stylists';
 const BOOKINGS_COLLECTION = 'bookings';
+const FAVOURITES_COLLECTION = 'favourites';
 
 export type ServiceDocument = {
   $id: string;
@@ -84,6 +85,17 @@ export type BookingDocument = {
   paymentStatus: string;
   bookingStatus: string;
   notes?: string;
+};
+
+export type FavouriteDocument = {
+  $id: string;
+  userId: string;
+  salonId: string;
+  $createdAt?: string;
+};
+
+export type FavouriteWithSalon = FavouriteDocument & {
+  salon: SalonDocument;
 };
 
 export class AppwriteService {
@@ -350,6 +362,55 @@ export class AppwriteService {
       return response.documents as unknown as BookingDocument[];
     } catch (error) {
       console.error('Failed to fetch user bookings:', error);
+      return [];
+    }
+  }
+
+  // Favourites
+  static async getUserFavourites(userId: string): Promise<FavouriteWithSalon[]> {
+    try {
+      console.log('📋 Fetching favourites for user:', userId);
+      
+      // First, get the user's favourite records
+      const favouritesResponse = await databases.listDocuments(
+        DATABASE_ID,
+        FAVOURITES_COLLECTION,
+        [
+          Query.equal('userId', userId),
+          Query.orderDesc('$createdAt'),
+          Query.limit(100)
+        ]
+      );
+
+      console.log('✅ Found', favouritesResponse.documents.length, 'favourite records');
+
+      const favourites = favouritesResponse.documents as unknown as FavouriteDocument[];
+
+      // Fetch full salon details for each favourite
+      const favouritesWithSalons: FavouriteWithSalon[] = [];
+
+      for (const favourite of favourites) {
+        try {
+          const salon = await databases.getDocument(
+            DATABASE_ID,
+            SALONS_COLLECTION,
+            favourite.salonId
+          );
+
+          favouritesWithSalons.push({
+            ...favourite,
+            salon: salon as unknown as SalonDocument
+          });
+        } catch (error) {
+          console.warn(`⚠️ Could not fetch salon ${favourite.salonId}:`, error);
+          // Skip this favourite if salon doesn't exist or can't be fetched
+        }
+      }
+
+      console.log('✅ Loaded', favouritesWithSalons.length, 'favourites with salon details');
+      return favouritesWithSalons;
+    } catch (error) {
+      console.error('❌ Failed to fetch user favourites:', error);
       return [];
     }
   }

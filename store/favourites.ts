@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { databases } from '../lib/appwrite';
+import { AppwriteService, type SalonDocument } from '../lib/appwrite-service';
 import { ID, Query } from 'react-native-appwrite';
 
 const DATABASE_ID = 'trimmr-db';
@@ -11,15 +12,8 @@ export type FavouriteSalon = {
   $id: string;
   userId: string;
   salonId: string;
-  salon?: {
-    name: string;
-    location: string;
-    rating: number;
-    reviewCount: number;
-    imageUrl?: string;
-    services: string[];
-  };
-  createdAt: string;
+  salon?: SalonDocument;
+  createdAt?: string;
 };
 
 interface FavouritesState {
@@ -51,18 +45,24 @@ const useFavouritesStore = create<FavouritesState>()(
         
         set({ loading: true, error: null });
         try {
-          const response = await databases.listDocuments(
-            DATABASE_ID,
-            FAVOURITES_COLLECTION,
-            [
-              Query.equal('userId', userId),
-              Query.orderDesc('$createdAt'),
-              Query.limit(100)
-            ]
-          );
+          console.log('📋 Loading favourites for user:', userId);
+          
+          // Use AppwriteService to fetch favourites with full salon details
+          const favouritesWithSalons = await AppwriteService.getUserFavourites(userId);
 
-          const favourites = response.documents as unknown as FavouriteSalon[];
+          console.log('✅ Loaded', favouritesWithSalons.length, 'favourites with salon details');
+
+          const favourites: FavouriteSalon[] = favouritesWithSalons.map(fav => ({
+            $id: fav.$id,
+            userId: fav.userId,
+            salonId: fav.salonId,
+            salon: fav.salon,
+            createdAt: fav.$createdAt
+          }));
+
           const favouriteSalonIds = new Set(favourites.map(fav => fav.salonId));
+
+          console.log('✅ Favourite salon IDs:', Array.from(favouriteSalonIds));
 
           set({ 
             favourites, 
@@ -70,7 +70,7 @@ const useFavouritesStore = create<FavouritesState>()(
             loading: false 
           });
         } catch (error: any) {
-          console.error('Failed to load favourites:', error);
+          console.error('❌ Failed to load favourites:', error);
           set({ 
             error: error?.message || 'Failed to load favourites',
             loading: false 

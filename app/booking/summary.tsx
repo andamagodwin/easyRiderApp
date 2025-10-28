@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import useBookingStore from '../../store/booking';
+import useBookingsStore from '../../store/bookings';
 import useAuthStore from '../../store/auth';
 import { Container } from '../../components/Container';
 import { SuccessModal } from '../../components/SuccessModal';
@@ -12,6 +13,7 @@ import { AppwriteService } from '../../lib/appwrite-service';
 export default function BookingSummary() {
   const router = useRouter();
   const { user } = useAuthStore();
+  const { addBooking } = useBookingsStore();
   const { 
     salon,
     selectedServices,
@@ -74,6 +76,9 @@ export default function BookingSummary() {
       const booking = await AppwriteService.createBooking(bookingData);
 
       console.log('✅ Booking created successfully:', booking.$id);
+
+      // Add booking to bookings store for real-time sync
+      addBooking(booking);
 
       setLoading(false);
       setShowSuccessModal(true);

@@ -94,7 +94,7 @@ export default function Favourites() {
                     salon={{
                       id: favourite.salonId,
                       name: favourite.salon.name,
-                      location: favourite.salon.location,
+                      location: `${favourite.salon.address}, ${favourite.salon.city}`,
                       distance: '0.5 km', // Could calculate based on location
                       rating: favourite.salon.rating,
                       reviewCount: favourite.salon.reviewCount,
