@@ -88,7 +88,7 @@ export default function Bookings() {
       {/* Salon Info */}
       <View className="flex-row mb-4">
         <Image
-          source={{ uri: 'https://via.placeholder.com/150' }}
+          source={{ uri: booking.salonImageUrl || 'https://via.placeholder.com/150' }}
           className="w-24 h-24 rounded-2xl"
         />
         <View className="flex-1 ml-3 justify-center">

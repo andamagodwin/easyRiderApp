@@ -57,10 +57,15 @@ const useBookingsStore = create<BookingState>((set, get) => ({
     try {
       set({ loading: true, error: null });
       
-      // TODO: Call API to cancel booking
-      // For now, just update local state
+      console.log('🚫 Cancelling booking:', bookingId);
+      
+      // Update booking status in Appwrite
+      await AppwriteService.updateBookingStatus(bookingId, 'cancelled');
+      
+      // Update local state
       get().updateBookingStatus(bookingId, 'cancelled');
       
+      console.log('✅ Booking cancelled successfully');
       set({ loading: false });
     } catch (error) {
       console.error('❌ Failed to cancel booking:', error);
@@ -68,6 +73,7 @@ const useBookingsStore = create<BookingState>((set, get) => ({
         loading: false, 
         error: 'Failed to cancel booking. Please try again.' 
       });
+      throw error;
     }
   },
 

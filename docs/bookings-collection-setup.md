@@ -24,45 +24,50 @@
    - Required: No
    - Array: No
 
-5. **stylistId** (String)
+5. **salonImageUrl** (String)
+   - Size: 2000
+   - Required: No
+   - Array: No
+
+6. **stylistId** (String)
    - Size: 255
    - Required: No
    - Array: No
 
-6. **stylistName** (String)
+7. **stylistName** (String)
    - Size: 255
    - Required: No
    - Array: No
 
-7. **serviceIds** (String)
+8. **serviceIds** (String)
    - Size: 36
    - Required: Yes
    - Array: Yes ✓
 
-8. **serviceNames** (String)
+9. **serviceNames** (String)
    - Size: 255
    - Required: Yes
    - Array: Yes ✓
 
-9. **servicePrices** (Float)
-   - Required: Yes
-   - Array: Yes ✓
+10. **servicePrices** (Float)
+    - Required: Yes
+    - Array: Yes ✓
 
-10. **appointmentDate** (String)
+11. **appointmentDate** (String)
     - Size: 255
     - Required: Yes
     - Array: No
 
-11. **appointmentTime** (String)
+12. **appointmentTime** (String)
     - Size: 255
     - Required: Yes
     - Array: No
 
-12. **totalPrice** (Float)
+13. **totalPrice** (Float)
     - Required: Yes
     - Array: No
 
-13. **totalDuration** (Integer)
+14. **totalDuration** (Integer)
     - Required: Yes
     - Array: No
     - Min: 0

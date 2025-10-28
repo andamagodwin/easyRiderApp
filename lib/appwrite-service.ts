@@ -70,6 +70,7 @@ export type BookingDocument = {
   salonId: string;
   salonName: string;
   salonAddress?: string;
+  salonImageUrl?: string;
   stylistId?: string;
   stylistName?: string;
   serviceIds: string[];
@@ -363,6 +364,25 @@ export class AppwriteService {
     } catch (error) {
       console.error('Failed to fetch user bookings:', error);
       return [];
+    }
+  }
+
+  static async updateBookingStatus(bookingId: string, status: string): Promise<boolean> {
+    try {
+      console.log('📝 Updating booking status:', bookingId, 'to', status);
+      
+      await databases.updateDocument(
+        DATABASE_ID,
+        BOOKINGS_COLLECTION,
+        bookingId,
+        { bookingStatus: status }
+      );
+      
+      console.log('✅ Booking status updated successfully');
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to update booking status:', error);
+      throw error;
     }
   }
 

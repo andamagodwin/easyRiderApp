@@ -53,6 +53,7 @@ export default function BookingSummary() {
         salonId: salon.$id,
         salonName: salon.name,
         salonAddress: `${salon.address}, ${salon.city}`,
+        salonImageUrl: salon.imageUrl || '',
         stylistId: selectedStylist?.$id || '',
         stylistName: selectedStylist?.name || 'Any stylist',
         serviceIds: selectedServices.map(s => s.$id),
