@@ -198,9 +198,47 @@ export default function MapView() {
                 coordinate={[salon.longitude, salon.latitude]}
                 onSelected={() => handleMarkerPress(salon)}
               >
-                <View className="items-center">
-                  <View className="w-10 h-10 bg-primary rounded-full items-center justify-center border-4 border-white shadow-lg">
+                <View style={{ alignItems: 'center' }}>
+                  <View style={{ 
+                    width: 40, 
+                    height: 40, 
+                    backgroundColor: '#235AFF', 
+                    borderRadius: 20,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderWidth: 4,
+                    borderColor: 'white',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.25,
+                    shadowRadius: 3.84,
+                    elevation: 5,
+                  }}>
                     <Ionicons name="cut" size={20} color="white" />
+                  </View>
+                  {/* Salon Name Label */}
+                  <View style={{
+                    marginTop: 4,
+                    backgroundColor: 'white',
+                    paddingHorizontal: 8,
+                    paddingVertical: 4,
+                    borderRadius: 8,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 2,
+                    elevation: 3,
+                    borderWidth: 1,
+                    borderColor: 'rgba(156, 164, 171, 0.2)',
+                  }}>
+                    <Text style={{ 
+                      color: '#0B0C15', 
+                      fontSize: 11, 
+                      fontWeight: '600',
+                      maxWidth: 100,
+                    }} numberOfLines={1}>
+                      {salon.name}
+                    </Text>
                   </View>
                 </View>
               </Mapbox.PointAnnotation>

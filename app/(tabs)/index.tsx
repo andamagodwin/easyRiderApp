@@ -2,7 +2,6 @@ import { Stack, useRouter } from 'expo-router';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import Header from '../../components/Header';
-import SearchBar from '../../components/SearchBar';
 import PromoBanner from '../../components/PromoBanner';
 import Services, { type Service } from '../../components/Services';
 import NearbySalons from '../../components/NearbySalons';
@@ -183,9 +182,6 @@ function MainContent() {
         </Section>
       )}
 
-      <Section>
-        <SearchBar />
-      </Section>
 
       <Section className="mt-4">
         <PromoBanner />
