@@ -134,23 +134,50 @@ export class AppwriteService {
     }
   }
 
-  static async getNearbySalons(
-    latitude: number,
-    longitude: number,
-    radiusKm = 10,
-    limit = 10
-  ): Promise<SalonDocument[]> {
+  static async getSalonsByCity(city: string, limit = 10): Promise<SalonDocument[]> {
     try {
-      // Note: This is a basic implementation. For true geospatial queries,
-      // you might want to implement server-side filtering or use a different approach
       const response = await databases.listDocuments(
         DATABASE_ID,
         SALONS_COLLECTION,
         [
           Query.equal('isActive', true),
+          Query.equal('city', city),
           Query.orderDesc('rating'),
-          Query.limit(limit * 2) // Get more to filter by distance
+          Query.limit(limit)
         ]
+      );
+      return response.documents as unknown as SalonDocument[];
+    } catch (error) {
+      console.error('Failed to fetch salons by city:', error);
+      return [];
+    }
+  }
+
+  static async getNearbySalons(
+    latitude: number,
+    longitude: number,
+    radiusKm = 10,
+    limit = 10,
+    city?: string
+  ): Promise<SalonDocument[]> {
+    try {
+      // Note: This is a basic implementation. For true geospatial queries,
+      // you might want to implement server-side filtering or use a different approach
+      const queries = [
+        Query.equal('isActive', true),
+        Query.orderDesc('rating'),
+        Query.limit(limit * 2) // Get more to filter by distance
+      ];
+
+      // Add city filter if provided
+      if (city) {
+        queries.push(Query.equal('city', city));
+      }
+
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        SALONS_COLLECTION,
+        queries
       );
 
       const salons = response.documents as unknown as SalonDocument[];

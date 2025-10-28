@@ -49,6 +49,7 @@ function MainContent() {
   const [salons, setSalons] = useState<Salon[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { location } = useLocationStore();
 
   const handleSalonPress = (salon: Salon) => {
     router.push(`./salon/${salon.id}`);
@@ -60,10 +61,18 @@ function MainContent() {
         setLoading(true);
         setError(null);
 
-        const [servicesData, salonsData] = await Promise.all([
-          AppwriteService.getServices(),
-          AppwriteService.getSalons(10)
-        ]);
+        // Fetch services (not dependent on location)
+        const servicesData = await AppwriteService.getServices();
+
+        // Fetch salons based on user's city if available
+        let salonsData: SalonDocument[];
+        if (location?.city) {
+          console.log('📍 Fetching salons for city:', location.city);
+          salonsData = await AppwriteService.getSalonsByCity(location.city, 10);
+        } else {
+          console.log('📍 No city available, fetching all salons');
+          salonsData = await AppwriteService.getSalons(10);
+        }
 
         // Transform services data
         const transformedServices: Service[] = servicesData.map((service: ServiceDocument) => ({
@@ -78,7 +87,9 @@ function MainContent() {
           id: salon.$id,
           name: salon.name,
           location: `${salon.city}, ${salon.state}`,
-          distance: calculateDistance(salon.latitude, salon.longitude),
+          distance: location 
+            ? calculateDistance(salon.latitude, salon.longitude, location.latitude, location.longitude)
+            : 'N/A',
           rating: salon.rating,
           reviewCount: salon.reviewCount,
           imageUrl: salon.imageUrl
@@ -123,14 +134,25 @@ function MainContent() {
     };
 
     loadData();
-  }, []);
+  }, [location]);
 
-  // Simple distance calculation (you can enhance this with real user location)
-  const calculateDistance = (lat: number, lng: number): string => {
-    // For now, return a mock distance
-    // In a real app, you'd calculate from user's current location
-    const distance = Math.floor(Math.random() * 10) + 1;
-    return `${distance} km`;
+  // Calculate distance between two points using Haversine formula
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): string => {
+    const R = 6371; // Radius of the Earth in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+    
+    // Format distance
+    if (distance < 1) {
+      return `${Math.round(distance * 1000)} m`;
+    }
+    return `${distance.toFixed(1)} km`;
   };
 
   if (loading) {
