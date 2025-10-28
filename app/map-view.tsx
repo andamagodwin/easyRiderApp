@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, Image } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Mapbox from '@rnmapbox/maps';
 import useLocationStore from '../store/location';
+import useSalonsStore from '../store/salons';
+import { AppwriteService, type SalonDocument } from '../lib/appwrite-service';
 
 // Set your Mapbox access token
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_ACCESS_TOKEN || 'pk.eyJ1IjoiYW5kYW1hZXpyYSIsImEiOiJjbWM3djMyamcwMmxuMmxzYTFsMThpNTJwIn0.9H7kNoaCYW0Kiw0wzrLfhQ');
@@ -24,9 +26,12 @@ type MapSalon = {
 export default function MapView() {
   const router = useRouter();
   const { location } = useLocationStore();
+  const { nearbySalons } = useSalonsStore();
   const mapRef = useRef<Mapbox.MapView>(null);
   const [selectedSalon, setSelectedSalon] = useState<MapSalon | null>(null);
   const [searchLocation, setSearchLocation] = useState('Lakewood, California');
+  const [salons, setSalons] = useState<MapSalon[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Use user's location or fall back to default Lakewood location
   const mapCenter = location 
@@ -40,86 +45,72 @@ export default function MapView() {
     }
   }, [location]);
 
-  // Mock salon data with coordinates (replace with real data from Appwrite)
-  const salons: MapSalon[] = [
-    {
-      id: '1',
-      name: 'Hair Avenue',
-      location: 'Lakewood, California',
-      distance: '2 km',
-      rating: 4.7,
-      reviewCount: 312,
-      imageUrl: 'https://via.placeholder.com/300x200',
-      latitude: 33.8536,
-      longitude: -118.1339,
-    },
-    {
-      id: '2',
-      name: 'Style Studio',
-      location: 'Bellflower, California',
-      distance: '3.5 km',
-      rating: 4.5,
-      reviewCount: 189,
-      imageUrl: 'https://via.placeholder.com/300x200',
-      latitude: 33.8817,
-      longitude: -118.1170,
-    },
-    {
-      id: '3',
-      name: 'Glam Salon',
-      location: 'Compton, California',
-      distance: '5 km',
-      rating: 4.8,
-      reviewCount: 256,
-      imageUrl: 'https://via.placeholder.com/300x200',
-      latitude: 33.8958,
-      longitude: -118.2201,
-    },
-    {
-      id: '4',
-      name: 'Beauty Lounge',
-      location: 'Norwalk, California',
-      distance: '4.2 km',
-      rating: 4.6,
-      reviewCount: 143,
-      imageUrl: 'https://via.placeholder.com/300x200',
-      latitude: 33.9022,
-      longitude: -118.0817,
-    },
-    {
-      id: '5',
-      name: 'Chic Cuts',
-      location: 'Signal Hill, California',
-      distance: '6 km',
-      rating: 4.9,
-      reviewCount: 298,
-      imageUrl: 'https://via.placeholder.com/300x200',
-      latitude: 33.8047,
-      longitude: -118.1678,
-    },
-    {
-      id: '6',
-      name: 'Elite Salon',
-      location: 'Los Alamitos, California',
-      distance: '7 km',
-      rating: 4.4,
-      reviewCount: 176,
-      imageUrl: 'https://via.placeholder.com/300x200',
-      latitude: 33.8031,
-      longitude: -118.0726,
-    },
-    {
-      id: '7',
-      name: 'Urban Cuts',
-      location: 'Downey, California',
-      distance: '8 km',
-      rating: 4.7,
-      reviewCount: 234,
-      imageUrl: 'https://via.placeholder.com/300x200',
-      latitude: 33.9401,
-      longitude: -118.1332,
-    },
-  ];
+  // Fetch salons with full data including coordinates
+  useEffect(() => {
+    const fetchSalonsWithCoordinates = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch salons from Appwrite with city filter if available
+        let salonsData: SalonDocument[];
+        if (location?.city) {
+          salonsData = await AppwriteService.getSalonsByCity(location.city, 20);
+        } else {
+          salonsData = await AppwriteService.getSalons(20);
+        }
+
+        // Transform to MapSalon format
+        const transformedSalons: MapSalon[] = salonsData.map((salon) => ({
+          id: salon.$id,
+          name: salon.name,
+          location: `${salon.city}, ${salon.state}`,
+          distance: location 
+            ? calculateDistance(salon.latitude, salon.longitude, location.latitude, location.longitude)
+            : 'N/A',
+          rating: salon.rating,
+          reviewCount: salon.reviewCount,
+          imageUrl: salon.imageUrl,
+          latitude: salon.latitude,
+          longitude: salon.longitude,
+        }));
+
+        setSalons(transformedSalons);
+      } catch (error) {
+        console.error('Failed to fetch salons for map:', error);
+        // If fetch fails, use data from store if available
+        if (nearbySalons.length > 0) {
+          // Note: These might not have coordinates, so filter them out
+          const salonsWithCoords = nearbySalons.filter(s => 
+            'latitude' in s && 'longitude' in s
+          ) as unknown as MapSalon[];
+          setSalons(salonsWithCoords);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSalonsWithCoordinates();
+  }, [location, nearbySalons]);
+
+  // Calculate distance between two points
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): string => {
+    const R = 6371; // Radius of the Earth in kilometers
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+    
+    // Format distance
+    if (distance < 1) {
+      return `${Math.round(distance * 1000)} m`;
+    }
+    return `${distance.toFixed(1)} km`;
+  };
 
   const handleSalonPress = (salon: MapSalon) => {
     router.push(`/salon/${salon.id}`);
@@ -170,132 +161,166 @@ export default function MapView() {
 
       {/* Map */}
       <View className="flex-1">
-        <Mapbox.MapView
-          ref={mapRef}
-          style={{ flex: 1 }}
-          styleURL={Mapbox.StyleURL.Street}
-          zoomEnabled={true}
-          scrollEnabled={true}
-          pitchEnabled={false}
-          rotateEnabled={false}
-        >
-          <Mapbox.Camera
-            zoomLevel={11}
-            centerCoordinate={mapCenter}
-            animationMode="flyTo"
-            animationDuration={2000}
-          />
+        {loading ? (
+          <View className="flex-1 items-center justify-center bg-bgPrimary">
+            <ActivityIndicator size="large" color="#235AFF" />
+            <Text className="text-gray1 mt-4">Loading salons...</Text>
+          </View>
+        ) : (
+          <Mapbox.MapView
+            ref={mapRef}
+            style={{ flex: 1 }}
+            styleURL={Mapbox.StyleURL.Street}
+            zoomEnabled={true}
+            scrollEnabled={true}
+            pitchEnabled={false}
+            rotateEnabled={false}
+          >
+            <Mapbox.Camera
+              zoomLevel={11}
+              centerCoordinate={mapCenter}
+              animationMode="flyTo"
+              animationDuration={2000}
+            />
 
-          {/* User Location Puck */}
-          <Mapbox.LocationPuck
-            pulsing={{ isEnabled: true }}
-            puckBearingEnabled
-            puckBearing="heading"
-          />
+            {/* User Location Puck */}
+            <Mapbox.LocationPuck
+              pulsing={{ isEnabled: true }}
+              puckBearingEnabled
+              puckBearing="heading"
+            />
 
-          {/* Salon Markers */}
-          {salons.map((salon) => (
-            <Mapbox.PointAnnotation
-              key={salon.id}
-              id={`salon-${salon.id}`}
-              coordinate={[salon.longitude, salon.latitude]}
-              onSelected={() => handleMarkerPress(salon)}
-            >
-              <View className="items-center">
-                <View className="w-10 h-10 bg-primary rounded-full items-center justify-center border-4 border-white shadow-lg">
-                  <Ionicons name="cut" size={20} color="white" />
+            {/* Salon Markers */}
+            {salons.map((salon) => (
+              <Mapbox.PointAnnotation
+                key={salon.id}
+                id={`salon-${salon.id}`}
+                coordinate={[salon.longitude, salon.latitude]}
+                onSelected={() => handleMarkerPress(salon)}
+              >
+                <View className="items-center">
+                  <View className="w-10 h-10 bg-primary rounded-full items-center justify-center border-4 border-white shadow-lg">
+                    <Ionicons name="cut" size={20} color="white" />
+                  </View>
                 </View>
-              </View>
-            </Mapbox.PointAnnotation>
-          ))}
-        </Mapbox.MapView>
+              </Mapbox.PointAnnotation>
+            ))}
+          </Mapbox.MapView>
+        )}
       </View>
 
       {/* Bottom Sheet with Salons */}
-      <View className="absolute bottom-0 left-0 right-0 bg-transparent">
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
-          snapToInterval={350}
-          decelerationRate="fast"
-        >
-          {selectedSalon ? (
-            // Show only selected salon
-            <View className="w-[350px] mr-4">
-              <View className="bg-white rounded-3xl overflow-hidden shadow-xl">
-                <Image
-                  source={{ uri: selectedSalon.imageUrl }}
-                  className="w-full h-48"
-                  resizeMode="cover"
-                />
-                <TouchableOpacity
-                  className="absolute top-4 right-4 w-10 h-10 bg-white/90 rounded-full items-center justify-center"
-                  onPress={() => setSelectedSalon(null)}
-                >
-                  <Ionicons name="heart-outline" size={24} color="#0B0C15" />
-                </TouchableOpacity>
-                <View className="p-4">
-                  <View className="flex-row items-center justify-between mb-2">
-                    <Text className="text-xl font-bold text-dark1 flex-1">
-                      {selectedSalon.name}
-                    </Text>
-                    <Text className="text-gray1 text-sm">{selectedSalon.distance}</Text>
-                  </View>
-                  <View className="flex-row items-center mb-3">
-                    <Ionicons name="location-outline" size={16} color="#9CA4AB" />
-                    <Text className="text-gray1 text-sm ml-1">{selectedSalon.location}</Text>
-                  </View>
-                  <View className="flex-row items-center">
-                    <Ionicons name="star" size={16} color="#FFC107" />
-                    <Text className="text-dark1 font-semibold ml-1">
-                      {selectedSalon.rating}
-                    </Text>
-                    <Text className="text-gray1 ml-1">({selectedSalon.reviewCount})</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          ) : (
-            // Show all salons
-            salons.map((salon) => (
-              <TouchableOpacity
-                key={salon.id}
-                onPress={() => handleSalonPress(salon)}
-                className="w-[350px] mr-4"
-              >
+      {!loading && salons.length > 0 && (
+        <View className="absolute bottom-0 left-0 right-0 bg-transparent">
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+            snapToInterval={350}
+            decelerationRate="fast"
+          >
+            {selectedSalon ? (
+              // Show only selected salon
+              <View className="w-[350px] mr-4">
                 <View className="bg-white rounded-3xl overflow-hidden shadow-xl">
-                  <Image
-                    source={{ uri: salon.imageUrl }}
-                    className="w-full h-48"
-                    resizeMode="cover"
-                  />
-                  <TouchableOpacity className="absolute top-4 right-4 w-10 h-10 bg-white/90 rounded-full items-center justify-center">
-                    <Ionicons name="heart-outline" size={24} color="#0B0C15" />
+                  {selectedSalon.imageUrl ? (
+                    <Image
+                      source={{ uri: selectedSalon.imageUrl }}
+                      className="w-full h-48"
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View className="w-full h-48 bg-bgPrimary items-center justify-center">
+                      <Ionicons name="storefront-outline" size={48} color="#9CA4AB" />
+                    </View>
+                  )}
+                  <TouchableOpacity
+                    className="absolute top-4 right-4 w-10 h-10 bg-white/90 rounded-full items-center justify-center"
+                    onPress={() => setSelectedSalon(null)}
+                  >
+                    <Ionicons name="close" size={24} color="#0B0C15" />
                   </TouchableOpacity>
                   <View className="p-4">
                     <View className="flex-row items-center justify-between mb-2">
                       <Text className="text-xl font-bold text-dark1 flex-1">
-                        {salon.name}
+                        {selectedSalon.name}
                       </Text>
-                      <Text className="text-gray1 text-sm">{salon.distance}</Text>
+                      <Text className="text-gray1 text-sm">{selectedSalon.distance}</Text>
                     </View>
                     <View className="flex-row items-center mb-3">
                       <Ionicons name="location-outline" size={16} color="#9CA4AB" />
-                      <Text className="text-gray1 text-sm ml-1">{salon.location}</Text>
+                      <Text className="text-gray1 text-sm ml-1">{selectedSalon.location}</Text>
                     </View>
                     <View className="flex-row items-center">
                       <Ionicons name="star" size={16} color="#FFC107" />
-                      <Text className="text-dark1 font-semibold ml-1">{salon.rating}</Text>
-                      <Text className="text-gray1 ml-1">({salon.reviewCount})</Text>
+                      <Text className="text-dark1 font-semibold ml-1">
+                        {selectedSalon.rating}
+                      </Text>
+                      <Text className="text-gray1 ml-1">({selectedSalon.reviewCount})</Text>
                     </View>
                   </View>
                 </View>
-              </TouchableOpacity>
-            ))
-          )}
-        </ScrollView>
-      </View>
+              </View>
+            ) : (
+              // Show all salons
+              salons.map((salon) => (
+                <TouchableOpacity
+                  key={salon.id}
+                  onPress={() => handleSalonPress(salon)}
+                  className="w-[350px] mr-4"
+                >
+                  <View className="bg-white rounded-3xl overflow-hidden shadow-xl">
+                    {salon.imageUrl ? (
+                      <Image
+                        source={{ uri: salon.imageUrl }}
+                        className="w-full h-48"
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <View className="w-full h-48 bg-bgPrimary items-center justify-center">
+                        <Ionicons name="storefront-outline" size={48} color="#9CA4AB" />
+                      </View>
+                    )}
+                    <TouchableOpacity className="absolute top-4 right-4 w-10 h-10 bg-white/90 rounded-full items-center justify-center">
+                      <Ionicons name="heart-outline" size={24} color="#0B0C15" />
+                    </TouchableOpacity>
+                    <View className="p-4">
+                      <View className="flex-row items-center justify-between mb-2">
+                        <Text className="text-xl font-bold text-dark1 flex-1">
+                          {salon.name}
+                        </Text>
+                        <Text className="text-gray1 text-sm">{salon.distance}</Text>
+                      </View>
+                      <View className="flex-row items-center mb-3">
+                        <Ionicons name="location-outline" size={16} color="#9CA4AB" />
+                        <Text className="text-gray1 text-sm ml-1">{salon.location}</Text>
+                      </View>
+                      <View className="flex-row items-center">
+                        <Ionicons name="star" size={16} color="#FFC107" />
+                        <Text className="text-dark1 font-semibold ml-1">{salon.rating}</Text>
+                        <Text className="text-gray1 ml-1">({salon.reviewCount})</Text>
+                      </View>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))
+            )}
+          </ScrollView>
+        </View>
+      )}
+
+      {/* Empty State */}
+      {!loading && salons.length === 0 && (
+        <View className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl p-6">
+          <View className="items-center py-8">
+            <Ionicons name="location-outline" size={64} color="#9CA4AB" />
+            <Text className="text-dark1 text-lg font-bold mt-4">No Salons Found</Text>
+            <Text className="text-gray1 text-center mt-2">
+              No salons available in {location?.city || 'your area'}
+            </Text>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 }

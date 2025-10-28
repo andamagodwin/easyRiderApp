@@ -11,6 +11,7 @@ import { View, ScrollView, ActivityIndicator, Text } from 'react-native';
 import { AppwriteService, type ServiceDocument, type SalonDocument } from '../../lib/appwrite-service';
 import { type Salon } from '../../components/SalonCard';
 import useLocationStore from '../../store/location';
+import useSalonsStore from '../../store/salons';
 
 export default function Home() {
   const router = useRouter();
@@ -50,9 +51,14 @@ function MainContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { location } = useLocationStore();
+  const { setNearbySalons } = useSalonsStore();
 
   const handleSalonPress = (salon: Salon) => {
     router.push(`./salon/${salon.id}`);
+  };
+
+  const handleViewOnMap = () => {
+    router.push('/map-view');
   };
 
   useEffect(() => {
@@ -97,6 +103,9 @@ function MainContent() {
 
         setServices(transformedServices);
         setSalons(transformedSalons);
+        
+        // Store salons for map view
+        setNearbySalons(transformedSalons);
       } catch (err) {
         console.error('Failed to load data:', err);
         setError('Failed to load data. Please check your connection and try again.');
@@ -134,7 +143,7 @@ function MainContent() {
     };
 
     loadData();
-  }, [location]);
+  }, [location, setNearbySalons]);
 
   // Calculate distance between two points using Haversine formula
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): string => {
@@ -187,7 +196,7 @@ function MainContent() {
       </Section>
 
       <Section className="mt-6">
-        <NearbySalons salons={salons} onSalonPress={handleSalonPress} />
+        <NearbySalons salons={salons} onSalonPress={handleSalonPress} onViewAllPress={handleViewOnMap} />
       </Section>
 
       <View className="h-6" />
