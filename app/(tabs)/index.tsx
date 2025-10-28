@@ -12,10 +12,16 @@ import { AppwriteService, type ServiceDocument, type SalonDocument } from '../..
 import { type Salon } from '../../components/SalonCard';
 
 export default function Home() {
+  const router = useRouter();
+
+  const handleBellPress = () => {
+    router.push('/notifications');
+  };
+
   return (
     <SafeAreaView className={styles.container} edges={['top']}>
       <Stack.Screen options={{ title: 'Home' }} />
-      <Header />
+      <Header onBellPress={handleBellPress} />
       <MainContent />
     </SafeAreaView>
   );
