@@ -30,38 +30,6 @@ export default function Profile() {
     );
   };
 
-  const menuItems = [
-    {
-      icon: 'person-outline',
-      title: 'Edit Profile',
-      subtitle: 'Update your personal information',
-      onPress: () => console.log('Edit Profile')
-    },
-    {
-      icon: 'notifications-outline',
-      title: 'Notifications',
-      subtitle: 'Manage your notification preferences',
-      onPress: () => console.log('Notifications')
-    },
-    {
-      icon: 'card-outline',
-      title: 'Payment Methods',
-      subtitle: 'Manage your payment options',
-      onPress: () => console.log('Payment Methods')
-    },
-    {
-      icon: 'help-circle-outline',
-      title: 'Help & Support',
-      subtitle: 'Get help and contact support',
-      onPress: () => console.log('Help & Support')
-    },
-    {
-      icon: 'settings-outline',
-      title: 'Settings',
-      subtitle: 'App preferences and privacy',
-      onPress: () => console.log('Settings')
-    }
-  ];
 
   return (
     <SafeAreaView className="flex-1 bg-white" edges={['top']}>
@@ -81,26 +49,7 @@ export default function Profile() {
           </View>
         </View>
 
-        {/* Menu Items */}
-        <View className="px-4 py-4">
-          {menuItems.map((item, index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={item.onPress}
-              className="flex-row items-center py-4 border-b border-lighter/50"
-              activeOpacity={0.7}
-            >
-              <View className="w-10 h-10 rounded-full bg-lighter items-center justify-center mr-3">
-                <Ionicons name={item.icon as any} size={20} color="#235AFF" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-dark1 font-medium">{item.title}</Text>
-                <Text className="text-gray1 text-sm mt-1">{item.subtitle}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="#A0A0A0" />
-            </TouchableOpacity>
-          ))}
-        </View>
+        
 
         {/* Sign Out Button */}
         <View className="px-4 py-6">

@@ -12,6 +12,7 @@ export type Salon = {
   rating: number;
   reviewCount: number;
   imageUrl?: string;
+  serviceIds?: string[]; // Optional service IDs for filtering
 };
 
 export type SalonCardProps = {

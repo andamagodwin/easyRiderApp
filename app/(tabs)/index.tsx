@@ -46,7 +46,9 @@ const styles = {
 function MainContent() {
   const router = useRouter();
   const [services, setServices] = useState<Service[]>([]);
-  const [salons, setSalons] = useState<Salon[]>([]);
+  const [allSalons, setAllSalons] = useState<Salon[]>([]); // Store all salons
+  const [salons, setSalons] = useState<Salon[]>([]); // Filtered salons to display
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>('all'); // Start with "All" selected
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { location } = useLocationStore();
@@ -60,11 +62,48 @@ function MainContent() {
     router.push('/map-view');
   };
 
+  const handleServicePress = (service: Service) => {
+    // Set the selected service ID
+    setSelectedServiceId(service.id);
+
+    // Update services to reflect active state
+    const updatedServices = services.map(s => ({
+      ...s,
+      isActive: s.id === service.id
+    }));
+    setServices(updatedServices);
+
+    // Filter salons based on selected service
+    if (service.id === 'all') {
+      // Show all salons when "All" is selected
+      setSalons(allSalons);
+      setNearbySalons(allSalons); // Update store for map view
+      console.log('🔍 Showing all salons:', allSalons.length);
+    } else {
+      // Filter by specific service
+      console.log('🔍 Filtering for service ID:', service.id);
+      console.log('🔍 Total salons to check:', allSalons.length);
+      
+      const filtered = allSalons.filter(salon => {
+        console.log(`  Checking salon "${salon.name}" with serviceIds:`, salon.serviceIds);
+        // Check if salon offers the selected service
+        const hasService = salon.serviceIds && salon.serviceIds.includes(service.id);
+        console.log(`  Has service: ${hasService}`);
+        return hasService;
+      });
+      
+      setSalons(filtered);
+      setNearbySalons(filtered); // Update store for map view
+      console.log(`✅ Filtering salons by service: ${service.name} - Found ${filtered.length} salons`);
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
         setError(null);
+        setSelectedServiceId('all'); // Reset to "All" when location changes
 
         // Fetch services (not dependent on location)
         const servicesData = await AppwriteService.getServices();
@@ -79,29 +118,42 @@ function MainContent() {
           salonsData = await AppwriteService.getSalons(10);
         }
 
-        // Transform services data
-        const transformedServices: Service[] = servicesData.map((service: ServiceDocument) => ({
-          id: service.$id,
-          name: service.name,
-          icon: service.icon as any,
-          isActive: service.isActive || false
-        }));
+        // Add "All" service at the beginning
+        const transformedServices: Service[] = [
+          {
+            id: 'all',
+            name: 'All',
+            icon: 'grid-outline',
+            isActive: true // "All" is active by default
+          },
+          ...servicesData.map((service: ServiceDocument) => ({
+            id: service.$id,
+            name: service.name,
+            icon: service.icon as any,
+            isActive: false
+          }))
+        ];
 
-        // Transform salons data
-        const transformedSalons = salonsData.map((salon: SalonDocument) => ({
-          id: salon.$id,
-          name: salon.name,
-          location: `${salon.city}, ${salon.state}`,
-          distance: location 
-            ? calculateDistance(salon.latitude, salon.longitude, location.latitude, location.longitude)
-            : 'N/A',
-          rating: salon.rating,
-          reviewCount: salon.reviewCount,
-          imageUrl: salon.imageUrl
-        }));
+        // Transform salons data - keep reference to original salon for service filtering
+        const transformedSalons = salonsData.map((salon: SalonDocument) => {
+          console.log(`📋 Salon "${salon.name}" has services:`, salon.services);
+          return {
+            id: salon.$id,
+            name: salon.name,
+            location: `${salon.city}, ${salon.state}`,
+            distance: location 
+              ? calculateDistance(salon.latitude, salon.longitude, location.latitude, location.longitude)
+              : 'N/A',
+            rating: salon.rating,
+            reviewCount: salon.reviewCount,
+            imageUrl: salon.imageUrl,
+            serviceIds: salon.services || [] // Store service IDs for filtering
+          };
+        });
 
         setServices(transformedServices);
-        setSalons(transformedSalons);
+        setAllSalons(transformedSalons);
+        setSalons(transformedSalons); // Initially show all salons
         
         // Store salons for map view
         setNearbySalons(transformedSalons);
@@ -111,13 +163,14 @@ function MainContent() {
         
         // Fallback to mock data on error
         setServices([
-          { id: '1', name: 'Hair Cut', icon: 'cut-outline', isActive: true },
+          { id: 'all', name: 'All', icon: 'grid-outline', isActive: true },
+          { id: '1', name: 'Hair Cut', icon: 'cut-outline', isActive: false },
           { id: '2', name: 'Hair Styling', icon: 'brush-outline', isActive: false },
           { id: '3', name: 'Nail Art', icon: 'hand-left-outline', isActive: false },
           { id: '4', name: 'Massage', icon: 'flower-outline', isActive: false },
         ]);
         
-        setSalons([
+        const mockSalons = [
           {
             id: '1',
             name: 'Hair Avenue',
@@ -125,7 +178,8 @@ function MainContent() {
             distance: '2 km',
             rating: 4.7,
             reviewCount: 312,
-            imageUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=100&h=100&fit=crop&crop=faces'
+            imageUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=100&h=100&fit=crop&crop=faces',
+            serviceIds: []
           },
           {
             id: '2',
@@ -134,8 +188,11 @@ function MainContent() {
             distance: '3.5 km',
             rating: 4.5,
             reviewCount: 89,
+            serviceIds: []
           },
-        ]);
+        ];
+        setAllSalons(mockSalons);
+        setSalons(mockSalons);
       } finally {
         setLoading(false);
       }
@@ -188,7 +245,7 @@ function MainContent() {
       </Section>
 
       <Section className="mt-6">
-        <Services services={services} />
+        <Services services={services} onServicePress={handleServicePress} />
       </Section>
 
       <Section className="mt-6">
