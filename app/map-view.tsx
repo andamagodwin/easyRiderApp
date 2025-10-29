@@ -129,35 +129,7 @@ export default function MapView() {
         }}
       />
 
-      {/* Header */}
-      <View className="px-6 py-1 bg-white">
-        <View className="flex-row items-center mb-4">
-          <TouchableOpacity 
-            onPress={() => router.back()}
-            className="w-10 h-10 rounded-xl bg-bgPrimary items-center justify-center mr-4"
-          >
-            <Ionicons name="chevron-back" size={20} color="#0B0C15" />
-          </TouchableOpacity>
-          <Text className="text-2xl font-bold text-dark1">Map</Text>
-        </View>
-
-        {/* Search Bar */}
-        <View className="flex-row items-center">
-          <View className="flex-1 flex-row items-center bg-bgPrimary rounded-2xl px-1 py-1 mr-2">
-            <Ionicons name="location" size={20} color="#235AFF" />
-            <TextInput
-              value={searchLocation}
-              onChangeText={setSearchLocation}
-              placeholder="Search location..."
-              placeholderTextColor="#9CA4AB"
-              className="flex-1 ml-3 text-dark1 text-base"
-            />
-          </View>
-         
-        </View>
-      </View>
-
-      {/* Map */}
+      {/* Map - Full Screen */}
       <View className="flex-1">
         {loading ? (
           <View className="flex-1 items-center justify-center bg-bgPrimary">
@@ -245,9 +217,51 @@ export default function MapView() {
         )}
       </View>
 
+      {/* Floating Header - Back Button and Search Bar */}
+      <View className="absolute top-0 left-0 right-0 px-6 pt-10 pb-3">
+        {/* Back Button */}
+        <View className="mb-1">
+          <TouchableOpacity 
+            onPress={() => router.back()}
+            className="w-10 h-10 rounded-xl bg-white items-center justify-center shadow-lg"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+              elevation: 5,
+            }}
+          >
+            <Ionicons name="chevron-back" size={20} color="#0B0C15" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Search Bar */}
+        <View className="flex-row items-center">
+          <View className="flex-1 flex-row items-center bg-white rounded-2xl px-4 py-3 shadow-lg"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+              elevation: 5,
+            }}
+          >
+            <Ionicons name="location" size={20} color="#235AFF" />
+            <TextInput
+              value={searchLocation}
+              onChangeText={setSearchLocation}
+              placeholder="Search location..."
+              placeholderTextColor="#9CA4AB"
+              className="flex-1 ml-3 text-dark1 text-base"
+            />
+          </View>
+        </View>
+      </View>
+
       {/* Bottom Sheet with Salons */}
       {!loading && salons.length > 0 && (
-        <View className="absolute bottom-0 left-0 right-0 bg-transparent">
+        <View className="absolute bottom-10 left-0 right-0 bg-transparent">
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}

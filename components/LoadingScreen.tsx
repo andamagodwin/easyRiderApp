@@ -27,7 +27,7 @@ export default function LoadingScreen() {
     Animated.loop(
       Animated.timing(rotateAnim, {
         toValue: 1,
-        duration: 1500,
+        duration: 300,
         easing: Easing.linear,
         useNativeDriver: true,
       })

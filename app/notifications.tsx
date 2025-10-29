@@ -22,50 +22,18 @@ export default function Notifications() {
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
 
   // Mock notifications - replace with real data from Appwrite later
+  // Start with empty array to show empty state by default
   const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'booking',
-      title: 'Booking Confirmed',
-      message: 'Your appointment at Hair Avenue for Oct 28 at 9:30 AM has been confirmed.',
-      time: '2 hours ago',
-      read: false,
-      imageUrl: 'https://via.placeholder.com/50'
-    },
-    {
-      id: '2',
-      type: 'promotion',
-      title: '20% Off This Weekend',
-      message: 'Get 20% off on all hair styling services this weekend at selected salons.',
-      time: '1 day ago',
-      read: false,
-    },
-    {
-      id: '3',
-      type: 'reminder',
-      title: 'Upcoming Appointment',
-      message: 'Reminder: You have an appointment tomorrow at 2:30 PM at Style Studio.',
-      time: '2 days ago',
-      read: true,
-      imageUrl: 'https://via.placeholder.com/50'
-    },
-    {
-      id: '4',
-      type: 'system',
-      title: 'App Update Available',
-      message: 'A new version of easyRider is available. Update now for the best experience.',
-      time: '3 days ago',
-      read: true,
-    },
-    {
-      id: '5',
-      type: 'booking',
-      title: 'Booking Cancelled',
-      message: 'Your booking at Glam Studio has been cancelled. Refund will be processed in 3-5 days.',
-      time: '1 week ago',
-      read: true,
-      imageUrl: 'https://via.placeholder.com/50'
-    }
+    // Uncomment below for testing with sample data
+    // {
+    //   id: '1',
+    //   type: 'booking',
+    //   title: 'Booking Confirmed',
+    //   message: 'Your appointment at Hair Avenue for Oct 28 at 9:30 AM has been confirmed.',
+    //   time: '2 hours ago',
+    //   read: false,
+    //   imageUrl: 'https://via.placeholder.com/50'
+    // },
   ]);
 
   const getIconName = (type: NotificationType): keyof typeof Ionicons.glyphMap => {
@@ -119,7 +87,7 @@ export default function Notifications() {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-bgPrimary">
+    <SafeAreaView edges={['top']} className="flex-1 bg-white">
       <Stack.Screen
         options={{
           headerShown: false,
@@ -189,16 +157,26 @@ export default function Notifications() {
           <View className="pb-6">
             {filteredNotifications.length === 0 ? (
               <View className="items-center justify-center py-20">
-                <View className="w-20 h-20 bg-lighter rounded-full items-center justify-center mb-4">
-                  <Ionicons name="notifications-outline" size={32} color="#9CA4AB" />
+                <View className="w-24 h-24 bg-bgPrimary rounded-full items-center justify-center mb-4">
+                  <Ionicons 
+                    name={activeTab === 'unread' && notifications.length > 0 ? "checkmark-done" : "notifications-outline"} 
+                    size={40} 
+                    color="#235AFF" 
+                  />
                 </View>
-                <Text className="text-xl font-semibold text-dark1 mb-2">
-                  {activeTab === 'all' ? 'No notifications' : 'No unread notifications'}
+                <Text className="text-xl font-bold text-dark1 mb-2">
+                  {notifications.length === 0 
+                    ? 'No Notifications Yet'
+                    : activeTab === 'all' 
+                      ? 'No notifications' 
+                      : 'All Caught Up!'}
                 </Text>
-                <Text className="text-gray1 text-center">
-                  {activeTab === 'all' 
-                    ? 'You\'re all caught up! Check back later for updates.'
-                    : 'You\'ve read all your notifications.'}
+                <Text className="text-gray1 text-center px-8">
+                  {notifications.length === 0 
+                    ? 'You don\'t have any notifications yet. We\'ll notify you about booking confirmations, promotions, and updates.'
+                    : activeTab === 'all' 
+                      ? 'You\'re all caught up! Check back later for updates.'
+                      : 'You\'ve read all your notifications. Great job staying on top of things!'}
                 </Text>
               </View>
             ) : (
