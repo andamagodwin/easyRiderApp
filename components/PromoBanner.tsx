@@ -8,7 +8,7 @@ export type PromoBannerProps = {
 export default function PromoBanner({ onPress }: PromoBannerProps) {
   return (
     <ImageBackground
-      source={require('../assets/home/home-ad.png')}
+      source={require('../assets/home/home-ad-1.png')}
       style={{ height: 200 }}
       imageStyle={{ borderRadius: 18 }}
       className="w-full rounded-2xl overflow-hidden"

@@ -177,7 +177,7 @@ export default function SalonDetails() {
       
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Header Image */}
-        <View className="relative">
+        <View className="relative rounded-xl">
           <Image 
             source={{ uri: salon.imageUrl }} 
             style={{ width, height: 250 }}
@@ -188,7 +188,7 @@ export default function SalonDetails() {
           <View className="absolute top-4 left-0 right-0 flex-row justify-between items-center px-4">
             <TouchableOpacity 
               onPress={() => router.back()}
-              className="w-10 h-10 rounded-full bg-white/90 items-center justify-center"
+              className="w-10 h-10 rounded-full bg-white items-center justify-center"
             >
               <Ionicons name="chevron-back" size={24} color="#0B0C15" />
             </TouchableOpacity>
@@ -206,7 +206,7 @@ export default function SalonDetails() {
                   });
                 }
               }}
-              className="w-10 h-10 rounded-full bg-white/90 items-center justify-center"
+              className="w-10 h-10 rounded-full bg-white items-center justify-center"
             >
               <Ionicons 
                 name={isFavourite ? "heart" : "heart-outline"} 

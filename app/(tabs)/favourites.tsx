@@ -30,7 +30,7 @@ export default function Favourites() {
   };
 
   return (
-    <SafeAreaView edges={['top']} className="flex-1 bg-bgPrimary">
+    <SafeAreaView edges={['top']} className="flex-1 bg-white">
       <Stack.Screen
         options={{
           headerShown: false,
@@ -41,12 +41,8 @@ export default function Favourites() {
         {/* Header */}
         <View className="flex-row items-center justify-between mb-6">
           <View>
-            <Text className="text-2xl font-bold text-dark1 mb-1">My Favourites</Text>
-            <Text className="text-gray1">Your saved salons</Text>
+            <Text className="text-2xl font-bold text-dark1 mb-1">My Favourite Salons</Text>
           </View>
-          <TouchableOpacity className="w-10 h-10 bg-white rounded-xl items-center justify-center">
-            <Ionicons name="heart" size={20} color="#FF4444" />
-          </TouchableOpacity>
         </View>
 
         {/* Error Message */}

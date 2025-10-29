@@ -130,7 +130,7 @@ export default function MapView() {
       />
 
       {/* Header */}
-      <View className="px-6 py-4 bg-white">
+      <View className="px-6 py-1 bg-white">
         <View className="flex-row items-center mb-4">
           <TouchableOpacity 
             onPress={() => router.back()}
@@ -138,12 +138,12 @@ export default function MapView() {
           >
             <Ionicons name="chevron-back" size={20} color="#0B0C15" />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold text-dark1">Map View</Text>
+          <Text className="text-2xl font-bold text-dark1">Map</Text>
         </View>
 
         {/* Search Bar */}
         <View className="flex-row items-center">
-          <View className="flex-1 flex-row items-center bg-bgPrimary rounded-2xl px-4 py-3 mr-3">
+          <View className="flex-1 flex-row items-center bg-bgPrimary rounded-2xl px-1 py-1 mr-2">
             <Ionicons name="location" size={20} color="#235AFF" />
             <TextInput
               value={searchLocation}
@@ -153,9 +153,7 @@ export default function MapView() {
               className="flex-1 ml-3 text-dark1 text-base"
             />
           </View>
-          <TouchableOpacity className="w-12 h-12 bg-bgPrimary rounded-2xl items-center justify-center">
-            <Ionicons name="options-outline" size={24} color="#0B0C15" />
-          </TouchableOpacity>
+         
         </View>
       </View>
 

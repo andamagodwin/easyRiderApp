@@ -79,7 +79,7 @@ export default function Bookings() {
   };
 
   const renderBookingCard = (booking: BookingDocument) => (
-    <View key={booking.$id} className="bg-white rounded-3xl p-4 mb-4 border border-gray2/30">
+    <View key={booking.$id} className="bg-white rounded-3xl p-4 mb-4">
       {/* Date */}
       <Text className="text-sm font-medium text-dark1 mb-4">
         {formatDate(booking.appointmentDate, booking.appointmentTime)}
@@ -105,16 +105,12 @@ export default function Bookings() {
         {activeTab === 'upcoming' && (
           <TouchableOpacity
             onPress={() => handleCancelBooking(booking.$id!)}
-            className="flex-1 mr-2 py-3 px-4 rounded-2xl border-2 border-primary"
+            className="flex-1 mr-2 py-3 px-4 rounded-2xl border-1 border-primary"
           >
             <Text className="text-primary text-center font-semibold">Cancel Booking</Text>
           </TouchableOpacity>
         )}
-        <TouchableOpacity
-          className={`flex-1 ${activeTab === 'upcoming' ? 'ml-2' : ''} py-3 px-4 rounded-2xl bg-primary`}
-        >
-          <Text className="text-white text-center font-semibold">View Receipt</Text>
-        </TouchableOpacity>
+       
       </View>
     </View>
   );
@@ -122,28 +118,28 @@ export default function Bookings() {
   const filteredBookings = filterBookings(activeTab);
 
   return (
-    <SafeAreaView className="flex-1 bg-bgPrimary" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-white" edges={['top']}>
       <Stack.Screen options={{ headerShown: false }} />
       
       {/* Header */}
       <View className="px-6 pt-4 pb-2 bg-bgPrimary">
         <View className="flex-row items-center mb-4">
-          <TouchableOpacity 
+          {/* <TouchableOpacity 
             onPress={() => router.back()}
             className="w-10 h-10 rounded-xl bg-white items-center justify-center mr-4"
           >
             <Ionicons name="chevron-back" size={20} color="#0B0C15" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <Text className="text-2xl font-bold text-dark1">Bookings</Text>
         </View>
 
         {/* Tabs */}
-        <View className="flex-row mb-4">
+        <View className="flex-row justify-between mb-4">
           <TouchableOpacity 
             onPress={() => setActiveTab('upcoming')}
             className="mr-6"
           >
-            <Text className={`text-base font-semibold pb-2 ${
+            <Text className={`text-base font-semibold pb-1 ${
               activeTab === 'upcoming' ? 'text-primary' : 'text-gray1'
             }`}>
               Upcoming
@@ -157,7 +153,7 @@ export default function Bookings() {
             onPress={() => setActiveTab('completed')}
             className="mr-6"
           >
-            <Text className={`text-base font-semibold pb-2 ${
+            <Text className={`text-base font-semibold pb-1 ${
               activeTab === 'completed' ? 'text-primary' : 'text-gray1'
             }`}>
               Completed
@@ -170,7 +166,7 @@ export default function Bookings() {
           <TouchableOpacity 
             onPress={() => setActiveTab('cancelled')}
           >
-            <Text className={`text-base font-semibold pb-2 ${
+            <Text className={`text-base font-semibold pb-1 ${
               activeTab === 'cancelled' ? 'text-primary' : 'text-gray1'
             }`}>
               Cancelled
