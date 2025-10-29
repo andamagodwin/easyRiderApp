@@ -62,7 +62,7 @@ function MainContent() {
     router.push('/map-view');
   };
 
-  const handleServicePress = (service: Service) => {
+  const handleServicePress = async (service: Service) => {
     // Set the selected service ID
     setSelectedServiceId(service.id);
 
@@ -80,21 +80,48 @@ function MainContent() {
       setNearbySalons(allSalons); // Update store for map view
       console.log('🔍 Showing all salons:', allSalons.length);
     } else {
-      // Filter by specific service
-      console.log('🔍 Filtering for service ID:', service.id);
-      console.log('🔍 Total salons to check:', allSalons.length);
-      
-      const filtered = allSalons.filter(salon => {
-        console.log(`  Checking salon "${salon.name}" with serviceIds:`, salon.serviceIds);
-        // Check if salon offers the selected service
-        const hasService = salon.serviceIds && salon.serviceIds.includes(service.id);
-        console.log(`  Has service: ${hasService}`);
-        return hasService;
-      });
-      
-      setSalons(filtered);
-      setNearbySalons(filtered); // Update store for map view
-      console.log(`✅ Filtering salons by service: ${service.name} - Found ${filtered.length} salons`);
+      try {
+        // Fetch salons that offer this specific service
+        console.log('🔍 ===== SERVICE FILTER TRIGGERED =====');
+        console.log('🔍 Service selected:', service);
+        console.log('🔍 Service name being sent:', service.name);
+        console.log('🔍 User city:', location?.city);
+        
+        let filteredSalonsData: SalonDocument[] = [];
+        if (location?.city) {
+          filteredSalonsData = await AppwriteService.getSalonsByCityAndService(
+            location.city, 
+            service.name,
+            10
+          );
+        } else {
+          console.log('⚠️ No city available, cannot filter by service');
+        }
+
+        console.log('🔍 Filtered salons data received:', filteredSalonsData.length);
+
+        // Transform the filtered salons
+        const transformedFiltered = filteredSalonsData.map((salon: SalonDocument) => ({
+          id: salon.$id,
+          name: salon.name,
+          location: `${salon.city}, ${salon.state}`,
+          distance: location 
+            ? calculateDistance(salon.latitude, salon.longitude, location.latitude, location.longitude)
+            : 'N/A',
+          rating: salon.rating,
+          reviewCount: salon.reviewCount,
+          imageUrl: salon.imageUrl,
+          serviceIds: salon.services || []
+        }));
+
+        setSalons(transformedFiltered);
+        setNearbySalons(transformedFiltered); // Update store for map view
+        console.log(`✅ Displaying ${transformedFiltered.length} salons offering ${service.name}`);
+      } catch (err) {
+        console.error('❌ Error filtering salons by service:', err);
+        setSalons([]);
+        setNearbySalons([]);
+      }
     }
   };
 
@@ -135,21 +162,18 @@ function MainContent() {
         ];
 
         // Transform salons data - keep reference to original salon for service filtering
-        const transformedSalons = salonsData.map((salon: SalonDocument) => {
-          console.log(`📋 Salon "${salon.name}" has services:`, salon.services);
-          return {
-            id: salon.$id,
-            name: salon.name,
-            location: `${salon.city}, ${salon.state}`,
-            distance: location 
-              ? calculateDistance(salon.latitude, salon.longitude, location.latitude, location.longitude)
-              : 'N/A',
-            rating: salon.rating,
-            reviewCount: salon.reviewCount,
-            imageUrl: salon.imageUrl,
-            serviceIds: salon.services || [] // Store service IDs for filtering
-          };
-        });
+        const transformedSalons = salonsData.map((salon: SalonDocument) => ({
+          id: salon.$id,
+          name: salon.name,
+          location: `${salon.city}, ${salon.state}`,
+          distance: location 
+            ? calculateDistance(salon.latitude, salon.longitude, location.latitude, location.longitude)
+            : 'N/A',
+          rating: salon.rating,
+          reviewCount: salon.reviewCount,
+          imageUrl: salon.imageUrl,
+          serviceIds: salon.services || [] // Store service IDs for reference
+        }));
 
         setServices(transformedServices);
         setAllSalons(transformedSalons);

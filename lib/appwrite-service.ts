@@ -153,6 +153,101 @@ export class AppwriteService {
     }
   }
 
+  static async getSalonsByCityAndService(city: string, serviceName: string, limit = 10): Promise<SalonDocument[]> {
+    try {
+      console.log('🔍 === STARTING SERVICE FILTER ===');
+      console.log('🔍 Looking for service name:', serviceName);
+      console.log('🔍 In city:', city);
+      
+      // Normalize the service name (remove spaces, lowercase) for matching
+      const normalizedSearchName = serviceName.replace(/\s+/g, '').toLowerCase();
+      console.log('🔍 Normalized search name:', normalizedSearchName);
+      
+      // Get all active salon services (we'll filter in memory for flexible matching)
+      const servicesResponse = await databases.listDocuments(
+        DATABASE_ID,
+        SALON_SERVICES_COLLECTION,
+        [
+          Query.equal('isActive', true),
+          Query.limit(500) // Get more to ensure we find all salons
+        ]
+      );
+
+      console.log('🔍 Total salon services retrieved:', servicesResponse.documents.length);
+      
+      // Filter services by normalized name matching
+      const matchingServices = servicesResponse.documents.filter((doc: any) => {
+        const normalizedDocName = doc.name.replace(/\s+/g, '').toLowerCase();
+        return normalizedDocName === normalizedSearchName;
+      });
+      
+      console.log('🔍 Services matching normalized name:', matchingServices.length);
+      
+      if (matchingServices.length > 0) {
+        console.log('🔍 First few matching service documents:', matchingServices.slice(0, 3).map((doc: any) => ({
+          id: doc.$id,
+          name: doc.name,
+          salonId: doc.salonId,
+          price: doc.price
+        })));
+      }
+
+      if (matchingServices.length === 0) {
+        console.log('❌ No salon services found matching:', serviceName);
+        console.log('💡 Tried normalized match for:', normalizedSearchName);
+        return [];
+      }
+
+      // Extract unique salon IDs
+      const salonIds = [...new Set(
+        matchingServices.map((doc: any) => doc.salonId)
+      )];
+
+      console.log(`✅ Found ${salonIds.length} unique salons offering "${serviceName}"`);
+      console.log('🔍 Salon IDs:', salonIds);
+
+      if (salonIds.length === 0) {
+        return [];
+      }
+
+      // Fetch all salons in the city first
+      console.log('🔍 Fetching all salons in city:', city);
+      const allSalonsInCity = await databases.listDocuments(
+        DATABASE_ID,
+        SALONS_COLLECTION,
+        [
+          Query.equal('isActive', true),
+          Query.equal('city', city),
+          Query.orderDesc('rating'),
+          Query.limit(100)
+        ]
+      );
+
+      console.log(`🔍 Found ${allSalonsInCity.documents.length} total salons in ${city}`);
+      
+      if (allSalonsInCity.documents.length > 0) {
+        console.log('🔍 Salon IDs in city:', allSalonsInCity.documents.map((s: any) => s.$id));
+      }
+
+      // Filter to only salons that offer the service
+      const filteredSalons = allSalonsInCity.documents.filter((salon: any) => {
+        const hasService = salonIds.includes(salon.$id);
+        console.log(`  ${hasService ? '✅' : '❌'} Salon "${salon.name}" (${salon.$id})`);
+        return hasService;
+      });
+
+      console.log(`🎯 Final result: ${filteredSalons.length} salons match the filter`);
+
+      // Limit the results
+      const limitedSalons = filteredSalons.slice(0, limit);
+
+      return limitedSalons as unknown as SalonDocument[];
+    } catch (error) {
+      console.error('❌ Failed to fetch salons by city and service:', error);
+      return [];
+    }
+  }
+
   static async getNearbySalons(
     latitude: number,
     longitude: number,
