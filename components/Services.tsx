@@ -24,15 +24,15 @@ export default function Services({ services, onServicePress }: ServicesProps) {
             key={service.id}
             onPress={() => onServicePress?.(service)}
             activeOpacity={0.7}
-            className={`mr-3 px-4 py-3 rounded-2xl flex-row items-center ${
-              service.isActive ? 'bg-primary' : 'bg-lighter border border-gray2'
+            className={`mr-3 px-4 py-3 rounded-full flex-row items-center ${
+              service.isActive ? 'bg-primary' : 'bg-lighter'
             }`}
             style={{ marginRight: index === services.length - 1 ? 16 : 12 }}
           >
             <Ionicons
               name={service.icon}
               size={20}
-              color={service.isActive ? '#ffffff' : '#235AFF'}
+              color={service.isActive ? '#ffffff' : 'black'}
             />
             <Text
               className={`ml-2 font-medium ${

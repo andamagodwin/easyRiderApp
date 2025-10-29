@@ -35,7 +35,7 @@ export default function SalonCard({ salon, onPress }: SalonCardProps) {
     <TouchableOpacity
       onPress={() => onPress?.(salon)}
       activeOpacity={0.7}
-      className="bg-white rounded-2xl p-4 mb-3 flex-row shadow-sm border border-gray2/30"
+      className="bg-white rounded-2xl p-4 mb-3 flex-row"
     >
       {/* Salon Image */}
       <View className="w-16 h-16 rounded-2xl bg-lighter mr-3 overflow-hidden">

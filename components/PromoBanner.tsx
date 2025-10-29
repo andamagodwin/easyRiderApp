@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ImageBackground } from 'react-native';
+import { View, Text, ImageBackground } from 'react-native';
 
 export type PromoBannerProps = {
   onPress?: () => void;
@@ -24,13 +24,7 @@ export default function PromoBanner({ onPress }: PromoBannerProps) {
           <Text className="text-white/90 mt-2">on All Haircuts Between 9–10 AM.</Text>
         </View>
 
-        <TouchableOpacity
-          onPress={onPress}
-          activeOpacity={0.8}
-          className="self-start bg-white px-5 py-3 rounded-2xl"
-        >
-          <Text className="text-dark1 font-semibold">Book Now</Text>
-        </TouchableOpacity>
+        
       </View>
     </ImageBackground>
   );
